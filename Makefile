@@ -29,11 +29,12 @@ SONG_SERVER_LOGS_DIR  := $(SCRATCH_DIR)/song-server-logs
 SONG_CLIENT_LOGS_DIR  := $(SCRATCH_DIR)/song-client-logs
 SCORE_CLIENT_LOG_FILE := $(SCORE_CLIENT_LOGS_DIR)/client.log
 SONG_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/song-client-output
+SCORE_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/score-client-output
 SONG_CLIENT_ANALYSIS_ID_FILE := $(SONG_CLIENT_OUTPUT_DIR)/analysisId.txt
 SONG_CLIENT_SUBMIT_RESPONSE_FILE := $(SONG_CLIENT_OUTPUT_DIR)/submit_response.json
 
 
-OUTPUT_DIRS := $(SONG_CLIENT_OUTPUT_DIR)
+OUTPUT_DIRS := $(SONG_CLIENT_OUTPUT_DIR) $(SCORE_CLIENT_OUTPUT_DIR)
 LOG_DIRS := $(SCORE_SERVER_LOGS_DIR) $(SCORE_CLIENT_LOGS_DIR) $(SONG_SERVER_LOGS_DIR) $(SONG_CLIENT_LOGS_DIR)
 
 
@@ -163,14 +164,14 @@ get-analysis-id:
 	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD))
 
 test-submit: start-services
-	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /data/submit/exampleVariantCall.json" $(END)
-	@$(SONG_CLIENT_CMD) submit -f /data/submit/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE)
+	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall.json" $(END)
+	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE)
 	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD)) $(END)
 
 test-manifest: test-submit
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
-	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD))  -f /song-client/output/manifest.txt -d /data/submit
+	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD))  -f /song-client/output/manifest.txt -d /song-client/input
 	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest.txt
 
 # Upload a manifest using the score-client. Affected by DEMO_MODE
