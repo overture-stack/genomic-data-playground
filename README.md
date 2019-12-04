@@ -5,6 +5,41 @@ The purpose of this repository is to provide users with a local and isolated san
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
 
+## Table of Contents
+* [Software Installation for x86_64](#software-installation-for-x86_64)
+  * [Software Requirements](#software-requirements)
+   * [Ubuntu 18.04 ](#ubuntu-1804)
+      * [Docker](#docker)
+      * [Docker Compose](#docker-compose)
+      * [GNU Make](#gnu-make)
+   * [OSX](#osx)
+      * [Docker](#docker-1)
+      * [Docker Compose](#docker-compose-1)
+      * [Homebrew](#homebrew)
+      * [GNU Make](#gnu-make-1)
+* [Architecture](#architecture)
+* [Bootstrapped Configurations](#bootstrapped-configurations)
+   * [Ego](#ego)
+   * [Score](#score)
+   * [Song](#song)
+   * [Object Storage](#object-storage)
+* [Usage](#usage)
+   * [Environment Setup](#environment-setup)
+      * [Starting All Services and Initializing Data](#starting-all-services-and-initializing-data)
+      * [Destroying All Services and Data](#destroying-all-services-and-data)
+   * [Service Interaction Examples](#service-interaction-examples)
+      * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
+      * [Submit a payload](#submit-a-payload)
+      * [Generate a manifest](#generate-a-manifest)
+      * [Upload the files](#upload-the-files)
+      * [Publish the analysis](#publish-the-analysis)
+      * [Download analysis files](#download-analysis-files)
+* [License](#license)
+
+<!-- Added by: rtisma, at: Wed Dec  4 09:34:59 EST 2019 -->
+
+<!--te-->
+
 ## Software Requirements
 - docker engine version >= **18.06.0**
 - docker-compose version >= **1.22.0**
@@ -12,7 +47,7 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
 - Bash Shell
 - GNU Make
 
-## Software Installation for x86_64/amd64
+## Software Installation for x86_64
 ### Ubuntu 18.04+
 #### Docker
 ```bash
@@ -90,8 +125,8 @@ The following configurations are initialized when the services are started.
 - Access Token: `f69b726d-d40f-4261-b105-1ec7e6bf04d5`
 - Access Token Scopes: `score.WRITE`, `song.WRITE`, `id.WRITE`
 - Database
-    - Host: localhost
-    - Port: 9444
+    - Host: `localhost`
+    - Port: `9444`
     - Name: `ego`
     - Username: `postgres`
     - Password: `password`
@@ -104,7 +139,7 @@ The following configurations are initialized when the services are started.
 - Swagger URL: http://localhost:8080/swagger-ui.html
 - Song-client Location: `./tools/song-client`
 - Client Access Token: `f69b726d-d40f-4261-b105-1ec7e6bf04d5`
-- Default StudyId:  `ABC123-CA`
+- Default StudyId:  `ABC123`
 - Database
     - Name: `song`
     - Username: `postgres`
@@ -112,8 +147,8 @@ The following configurations are initialized when the services are started.
 
 ### Object Storage
 - UI URL: http://localhost:8085
-- Minio Client Id: minio
-- Minio Client Secret: minio123
+- Minio Client Id: `minio`
+- Minio Client Secret: `minio123`
 
 ## Usage
 The following sections describe Makefile targets that executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
@@ -144,7 +179,7 @@ Similarly, any files that need to be output from the containers to the docker ho
 This has already been pre-configured in the `docker-compose.yml`. 
 The following represent the docker host path to docker container path mappings:
 
-#### Table 1: Docker host and container path mappings
+#### Docker host and container path mappings
 | Host path | Container path | Description |
 | ----------| ---------------|-------------|
 | ./song-example-data             | /song-client/input   | Contains example files for submitting to Song and uploading to Score. Used by the `song-client` and `score-client` |
@@ -192,15 +227,21 @@ Once the files of an analysis are upload, the analysis can be published using th
 
 #### Download analysis files
 
+Before downloading an object, the `objectId` must be known. 
+Using the following command, search Song for the analysis given the `analysisId`, and then
+extract the `objectId` for the `example.vcf.gz` file.
 
-Example
 ```bash
-
-# manifest.txt located in /data dir
-# files to be uploaded located in /data/example dir
-
-./score-client upload --manifest /data/manifest.txt
+./tools/song-client search -a <analysisId>
 ```
+
+Using the extract `objectId`, run the following command to download the files
+
+```bash
+./tools/score-client download --object-id <objectId> --output-dir /score-client/output/download1
+```
+This will download the file to the specified directory. 
+The file can be accessed on the docker host by referring to the [docker path mapping table](#docker-host-and-container-path-mappings)
 
 ## License
 Copyright (c) 2019. Ontario Institute for Cancer Research

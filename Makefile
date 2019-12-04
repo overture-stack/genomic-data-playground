@@ -152,7 +152,7 @@ start-services: _setup
 	@$(MAKE) _ping_song_server
 	@$(MAKE) _ping_score_server
 	@$(MAKE) _setup-object-storage
-	@echo $(DONE_MESSAGE)
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 #############################################################
 #  Client targets
