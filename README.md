@@ -6,17 +6,18 @@ Every release contains a stable and tested configuration of various Overture pro
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
 
 ## Table of Contents
+* [Software Requirements](#software-requirements)
+* [Quick Start](#quick-start)
 * [Software Installation for x86_64](#software-installation-for-x86_64)
-  * [Software Requirements](#software-requirements)
-   * [Ubuntu 18.04 ](#ubuntu-1804)
-      * [Docker](#docker)
-      * [Docker Compose](#docker-compose)
-      * [GNU Make](#gnu-make)
+   * [Ubuntu 18.04 or Higher](#ubuntu-18.04-or-higher)
+      * [Docker](#ubuntu-docker)
+      * [Docker Compose](#ubuntu-docker-compose)
+      * [GNU Make](#ubuntu-gnu-make)
    * [OSX](#osx)
-      * [Docker](#docker-1)
-      * [Docker Compose](#docker-compose-1)
+      * [Docker](#osx-docker)
+      * [Docker Compose](#osx-docker-compose)
       * [Homebrew](#homebrew)
-      * [GNU Make](#gnu-make-1)
+      * [GNU Make](#osx-gnu-make)
 * [Architecture](#architecture)
 * [Bootstrapped Configurations](#bootstrapped-configurations)
    * [Ego](#ego)
@@ -47,9 +48,12 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
 - Bash Shell
 - GNU Make
 
+## Quick Start
+Assuming docker, docker-compose and make are already installed, you can just jump straight to the [usage sections](#usage)
+
 ## Software Installation for x86_64
-### Ubuntu 18.04+
-#### Docker
+### Ubuntu 18.04 or Higher
+#### <a name="ubuntu-docker"></a> Docker
 ```bash
 sudo apt update
 sudo apt remove docker docker-engine docker.io
@@ -66,7 +70,7 @@ sudo usermod -aG docker <your_user_name>
 docker ps
 ```
 
-#### Docker Compose
+#### <a name="ubuntu-docker-compose"></a> Docker Compose
 ```bash
 # You can replace 1.25.0 with any version
 sudo curl -L "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -77,7 +81,7 @@ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 docker-compose --version
 ```
 
-#### GNU Make
+#### <a name="ubuntu-gnu-make"></a> GNU Make
 ```bash
 sudo apt update 
 sudo apt install -y make
@@ -85,19 +89,19 @@ sudo apt install -y make
 
 ### OSX
 
-#### Docker
+#### <a name="osx-docker"></a> Docker
 Refer to the instructions for [Installing Docker Desktop on Mac](https://docs.docker.com/docker-for-mac/install/)
 
-#### Docker Compose
+#### <a name="osx-docker-compose"></a> Docker Compose
 Already included in Docker Desktop on Mac
 
 #### Homebrew
-Needed for install GNU Make
+Needed in order to install GNU Make
 ```bash
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-#### GNU Make
+#### <a name="osx-gnu-make"></a> GNU Make
 ```bash
 brew install coreutils make
 ```
@@ -121,7 +125,7 @@ The following configurations are initialized when the services are started.
 - Swagger URL: http://localhost:9082/swagger-ui.html
 - User Id: `c6608c3e-1181-4957-99c4-094493391096`
 - User Email: `john.doe@example.com`
-- User Name `john.doe@example.com`
+- User Name: `john.doe@example.com`
 - Access Token: `f69b726d-d40f-4261-b105-1ec7e6bf04d5`
 - Access Token Scopes: `score.WRITE`, `song.WRITE`, `id.WRITE`
 - Database
@@ -151,14 +155,14 @@ The following configurations are initialized when the services are started.
 - Minio Client Secret: `minio123`
 
 ## Usage
-The following sections describe Makefile targets that executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
+The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
 
 ### Environment Setup
 These scenarios are related to starting and stopping the docker services.
 
 #### Starting All Services and Initializing Data
 
-To start the song, score, and ego services, simply run the following command:
+To start the song, score, and ego services and initialize their data, simply run the following command:
 
 ```bash
 make start-services
@@ -173,18 +177,18 @@ make clean
 This will delete all files and directories located in the `./scratch` directory, including logs and generated files.
 
 ### Service Interaction Examples
-All file paths below are relative to the root directory of this repository.
 Since all clients and services communicate through a docker network, any files from the docker host that are to be used with the clients must be mounted into the docker containers. 
 Similarly, any files that need to be output from the containers to the docker host must also be mounted. Since these files are not apart of this repository, they can be located in the `./scratch` directory.
 This has already been pre-configured in the `docker-compose.yml`. 
 The following represent the docker host path to docker container path mappings:
 
+**NOTE:** All file paths below are relative to the root directory of this repository.
 #### Docker host and container path mappings
 | Host path | Container path | Description |
 | ----------| ---------------|-------------|
 | ./song-example-data             | /song-client/input   | Contains example files for submitting to Song and uploading to Score. Used by the `song-client` and `score-client` |
-| ./scratch/song-client-output    | /song-client/output  | Contains generated files generated by the `song-client`. Used by the `song-client` and `score-client`. |
-| ./scratch/score-client-output   | /score-client/output | Contains files generated files by the `score-client`. Used only by the `score-client`. |
+| ./scratch/song-client-output    | /song-client/output  | Contains files generated by the `song-client`. Used by the `song-client` and `score-client`. |
+| ./scratch/score-client-output   | /score-client/output | Contains files generated by the `score-client`. Used only by the `score-client`. |
 | ./scratch/song-client-logs      | /song-client/logs    | Contains logs generated by the `song-client`. Used only by `song-client`. |
 | ./scratch/score-client-logs     | /score-client/logs   | Contains logs generated by the `score-client`. Used only by `score-client`. |
 | ./scratch/song-server-logs      | /song-server/logs    | Contains logs generated by the `song-server`. Used only by `song-server`. |
@@ -220,14 +224,14 @@ Using the `manifest.txt` from the previous [manifest generation step](#generate-
 ```
 
 #### Publish the analysis
-Once the files of an analysis are upload, the analysis can be published using the `analysisId` returned from the [submit step](#submit-a-payload)
+Once the files of an analysis are uploaded, the analysis can be published using the `analysisId` returned from the [submit step](#submit-a-payload)
 ```bash
 ./tools/song-client publish -a <analysisId>
 ```
 
 #### Download analysis files
 
-Before downloading an object, the `objectId` must be known. 
+Before downloading a file, the `objectId` must be known. 
 Using the following command, search Song for the analysis given the `analysisId`, and then
 extract the `objectId` for the `example.vcf.gz` file.
 
@@ -235,7 +239,7 @@ extract the `objectId` for the `example.vcf.gz` file.
 ./tools/song-client search -a <analysisId>
 ```
 
-Using the extract `objectId`, run the following command to download the files
+Using the extracted `objectId`, run the following command to download the file:
 
 ```bash
 ./tools/score-client download --object-id <objectId> --output-dir /score-client/output/download1
