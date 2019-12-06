@@ -155,6 +155,20 @@ start-services: _setup
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 #############################################################
+#  Logging Targets
+#############################################################
+show-song-server-logs:
+	@echo $(YELLOW)$(INFO_HEADER) "Showing logs for song-server" $(END)
+	@$(DOCKER_COMPOSE_CMD) logs song-server
+	@echo $(DONE_MESSAGE)
+
+show-score-server-logs:
+	@echo $(YELLOW)$(INFO_HEADER) "Showing logs for score-server" $(END)
+	@$(DOCKER_COMPOSE_CMD) logs score-server
+	@echo $(DONE_MESSAGE)
+
+
+#############################################################
 #  Client targets
 #############################################################
 
