@@ -113,13 +113,7 @@ For Score the back-end object storage service that was used was [Minio](https://
 
 For more information on these services, visit the [Song documentation](https://song-docs.readthedocs.io), [Ego documentation](https://ego.readthedocs.io) and [Score documentation](https://score-docs.readthedocs.io). 
 
-<img src="architecture.png"
-     alt="Architecure"
-     style="padding-left: 20%"
-     width="80%"
-     height="auto"
-     align="middle"
-      class="center">
+<img src="architecture.png" width="50%">
 
 
 ## <a name="bootstrapped-configurations"></a>Bootstrapped Configurations
