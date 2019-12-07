@@ -145,10 +145,10 @@ init-log-dirs:
 #  Docker targets
 #############################################################
 
-# Start ego, song, score, dcc-id and object-storage.
+# Start ego, song, score, and object-storage.
 start-services: _setup
-	@echo $(YELLOW)$(INFO_HEADER) "Starting all services: ego, score, song, dcc-id, score and object-storage" $(END)
-	@$(DC_UP_CMD) ego-api score-server song-server object-storage dcc-id-server
+	@echo $(YELLOW)$(INFO_HEADER) "Starting all services: ego, score, song, score and object-storage" $(END)
+	@$(DC_UP_CMD) ego-server score-server song-server object-storage
 	@$(MAKE) _ping_song_server
 	@$(MAKE) _ping_score_server
 	@$(MAKE) _setup-object-storage

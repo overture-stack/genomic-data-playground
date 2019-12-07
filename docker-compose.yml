@@ -1,10 +1,10 @@
 version: '3.7'
 services:
-  ego-api:
+  ego-server:
     image: "overture/ego:2.9.0"
     environment:
       SERVER_PORT: 8080
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ego-postgres:5432/ego?stringtype=unspecified
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ego-db:5432/ego?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_FLYWAY_ENABLED: "true"
@@ -16,8 +16,8 @@ services:
       - "9082:8080"
     command: java -jar /srv/ego/install/ego.jar
     depends_on:
-      - ego-postgres
-  ego-postgres:
+      - ego-db
+  ego-db:
     image: postgres:9.5
     environment:
       - POSTGRES_DB=ego
@@ -57,7 +57,7 @@ services:
       S3_ACCESSKEY: minio
       S3_SECRETKEY: minio123
       S3_SIGV4ENABLED: "true"
-      AUTH_SERVER_URL: http://ego-api:8080/o/check_token/
+      AUTH_SERVER_URL: http://ego-server:8080/o/check_token/
       AUTH_SERVER_CLIENTID: score
       AUTH_SERVER_CLIENTSECRET: scoresecret
       AUTH_SERVER_UPLOADSCOPE: score.WRITE
@@ -75,7 +75,7 @@ services:
       - "8087:8080"
     depends_on:
       - object-storage
-      - ego-api
+      - ego-server
     volumes:
       - "./scratch/score-server-logs:/score-server/logs"
   score-client:
@@ -125,7 +125,7 @@ services:
     environment:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: "prod,secure,default"
-      AUTH_SERVER_URL: http://ego-api:8080/o/check_token/
+      AUTH_SERVER_URL: http://ego-server:8080/o/check_token/
       AUTH_SERVER_CLIENTID: song
       AUTH_SERVER_CLIENTSECRET: songsecret
       AUTH_SERVER_SCOPE_STUDY_PREFIX: song.
@@ -139,53 +139,15 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://song-db/song?stringtype=unspecified
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_LOCATIONS: "classpath:db/migration"
-      ID_USELOCAL: "false"
-      ID_FEDERATED_AUTH_BEARER_TOKEN:              f69b726d-d40f-4261-b105-1ec7e6bf04d5
-      ID_FEDERATED_URITEMPLATE_DONOR:              http://dcc-id-server:8080/donor/id?submittedProjectId={studyId}&submittedDonorId={submitterId}&create=true
-      ID_FEDERATED_URITEMPLATE_SPECIMEN:           http://dcc-id-server:8080/specimen/id?submittedProjectId={studyId}&submittedSpecimenId={submitterId}&create=true
-      ID_FEDERATED_URITEMPLATE_SAMPLE:             http://dcc-id-server:8080/sample/id?submittedProjectId={studyId}&submittedSampleId={submitterId}&create=true
-      ID_FEDERATED_URITEMPLATE_FILE:               http://dcc-id-server:8080/object/id?analysisId={analysisId}&fileName={fileName}
-      ID_FEDERATED_URITEMPLATE_ANALYSIS_EXISTENCE: http://dcc-id-server:8080/analysis/id?submittedAnalysisId={analysisId}&create=false
-      ID_FEDERATED_URITEMPLATE_ANALYSIS_GENERATE:  http://dcc-id-server:8080/analysis/unique
-      ID_FEDERATED_URITEMPLATE_ANALYSIS_SAVE:      http://dcc-id-server:8080/analysis/id?submittedAnalysisId={analysisId}&create=true
+      ID_USELOCAL: "true"
     ports:
       - "8080:8080"
     depends_on:
       - song-db 
-      - ego-api
+      - ego-server
       - score-server
-      - dcc-id-server
     volumes:
       - "./scratch/song-server-logs:/song-server/logs"
-  dcc-id-db:
-    image: icgcdcc/dcc-id-db:3908f82
-    environment:
-      POSTGRES_DB: dcc_identifier
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-  dcc-id-server:
-    # This is a reference implementation
-    image: icgcdcc/dcc-id-server:3908f82
-    environment:
-      AUTH_SERVER_URL: http://ego-api:8080/o/check_token/
-      AUTH_SERVER_CLIENTID: dcc-id
-      AUTH_SERVER_CLIENTSECRET: dccidsecret
-      AUTH_SERVER_PREFIX: id
-      AUTH_SERVER_SUFFIX: WRITE
-      AUTH_CONNECTION_MAXRETRIES: 5
-      AUTH_CONNECTION_INITIALBACKOFF: 15000
-      AUTH_CONNECTION_MULTIPLIER: 2.0
-      SPRING_DATASOURCE_URL: jdbc:postgresql://dcc-id-db/dcc_identifier
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_PROFILES_ACTIVE: secure
-    depends_on:
-      - dcc-id-db
-      - ego-api
-    expose:
-      - "8080"
-    ports:
-      - "8086:8080"
 
 volumes:
     object-storage-data: {}
