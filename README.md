@@ -1,5 +1,4 @@
-Welcome to the Overture Genomic Data Playground!
----
+# Welcome to the Overture Genomic Data Playground!
 
 The purpose of this repository is to provide users with a local and isolated sandbox to play with some of Overture's genomic services, such as Song, Score and Ego. 
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
