@@ -1,0 +1,46 @@
+{
+  "studyId" : "ABC123",
+  "analysisType" : {
+    "name" : "variantCall"
+  },
+  "experiment": {
+    "variantCallingTool": "silver bullet",
+    "matchedNormalSampleSubmitterId": "sample-x24-11a"
+  },
+  "samples": [
+    {
+      "submitterSampleId": "internal_sample_2",
+      "sampleType": "Total RNA",
+      "matchedNormalSubmitterSampleId": "sample-x24-11a",
+      "specimen": {
+        "submitterSpecimenId": "internal_specimen_2",
+        "specimenType": "Primary tumour",
+        "specimenTissueSource": "Solid tissue",
+        "tumourNormalDesignation": "Tumour"
+      },
+      "donor": {
+        "submitterDonorId": "internal_donor_123456789-00",
+        "gender": "Female",
+        "age": 20
+      }
+    }
+  ],
+  "files": [
+    {
+	  "dataType": "Variant Calling Data",
+      "fileName": "example2.vcf.gz",
+      "fileSize": 52,
+      "fileMd5sum": "9a793e90d0d1e11301ea8da996446e59",
+      "fileAccess" : "open",
+      "fileType": "VCF"
+    },
+    {
+	  "dataType": "Variant Calling Index",
+      "fileName": "example2.vcf.gz.idx",
+      "fileSize": 25,
+      "fileMd5sum": "c03274816eb4907a92b8e5632cd6eb81",
+      "fileAccess" : "open",
+      "fileType": "IDX"
+    }
+  ]
+}

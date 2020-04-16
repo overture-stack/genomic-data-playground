@@ -14,11 +14,11 @@
   },
   "samples": [
     {
-      "submitterSampleId": "internal_sample_98024759826836",
+      "submitterSampleId": "internal_sample_1",
       "sampleType": "Total RNA",
       "matchedNormalSubmitterSampleId": "sample-x24-11a",
       "specimen": {
-        "submitterSpecimenId": "internal_specimen_9b73gk8s02dk",
+        "submitterSpecimenId": "internal_specimen_1",
         "specimenType": "Primary tumour",
         "specimenTissueSource": "Solid tissue",
         "tumourNormalDesignation": "Tumour",
@@ -31,6 +31,7 @@
       "donor": {
         "submitterDonorId": "internal_donor_123456789-00",
         "gender": "Female",
+        "age": 30,
         "randomField4" : "we can define any DONOR field. For example, randomField4",
         "randomField5" : "as a second example, we can define another random DONOR field called randomField5",
         "info" : {
