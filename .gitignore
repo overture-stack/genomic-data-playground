@@ -88,3 +88,7 @@ song-client/.factorypath
 song-core/.factorypath
 
 song-server/.factorypath
+
+.Rhistory
+*swp
+*swo
