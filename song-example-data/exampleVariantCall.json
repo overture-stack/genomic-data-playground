@@ -62,7 +62,7 @@
     {
 	  "dataType": "Variant Calling Index",
       "fileName": "example.vcf.gz.idx",
-      "fileSize": 25,
+      "fileSize": 24,
       "fileMd5sum": "c03274816eb4907a92b8e5632cd6eb81",
       "fileAccess" : "open",
       "fileType": "IDX",

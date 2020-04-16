@@ -29,7 +29,7 @@
     {
 	  "dataType": "Variant Calling Data",
       "fileName": "example2.vcf.gz",
-      "fileSize": 52,
+      "fileSize": 55,
       "fileMd5sum": "9a793e90d0d1e11301ea8da996446e59",
       "fileAccess" : "open",
       "fileType": "VCF"
