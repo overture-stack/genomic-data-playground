@@ -40,7 +40,7 @@ LOG_DIRS := $(SCORE_SERVER_LOGS_DIR) $(SCORE_CLIENT_LOGS_DIR) $(SONG_SERVER_LOGS
 
 # Commands
 DOCKER_COMPOSE_CMD := MY_UID=$(MY_UID) MY_GID=$(MY_GID) $(DOCKER_COMPOSE_EXE) -f $(ROOT_DIR)/docker-compose.yml
-SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client bin/sing
+SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client java --illegal-access=deny -Dlog.name=song -Dlog.path=/song-client/logs -Dlogback.configurationFile=/song-client/conf/logback.xml -jar /song-client/lib/song-client.jar /song-client/conf/application.yml
 SCORE_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) score-client bin/score-client
 DC_UP_CMD := $(DOCKER_COMPOSE_CMD) up -d --build
 
@@ -146,12 +146,18 @@ init-log-dirs:
 #############################################################
 
 # Start ego, song, score, and object-storage.
-start-services: _setup
-	@echo $(YELLOW)$(INFO_HEADER) "Starting all services: ego, score, song, score and object-storage" $(END)
+start-storage-services: _setup
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: ego, score, song, score and object-storage" $(END)
 	@$(DC_UP_CMD) ego-server score-server song-server object-storage
 	@$(MAKE) _ping_song_server
 	@$(MAKE) _ping_score_server
 	@$(MAKE) _setup-object-storage
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
+
+# Start maestro, elasticsearch, zookeeper, kafka, and the rest proxy
+start-maestro-services:
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
+	@$(DC_UP_CMD) maestro rest-proxy
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 #############################################################
@@ -177,7 +183,7 @@ GET_ANALYSIS_ID_CMD := cat $(SONG_CLIENT_ANALYSIS_ID_FILE)
 get-analysis-id:
 	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD))
 
-test-submit: start-services
+test-submit: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall.json" $(END)
 	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE)
@@ -196,6 +202,11 @@ test-score-upload:  test-manifest _ping_score_server
 test-publish: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD))
+
+test-upload-and-publish: test-score-upload _ping_song_server _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD))
+
 
 test-unpublish: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
