@@ -156,8 +156,8 @@ start-storage-services: _setup
 
 # Start maestro, elasticsearch, zookeeper, kafka, and the rest proxy
 start-maestro-services:
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
-	@$(DC_UP_CMD) maestro rest-proxy
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
+	@$(DC_UP_CMD) arranger-ui rest-proxy
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 #############################################################
