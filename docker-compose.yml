@@ -247,7 +247,7 @@ services:
 
   arranger-server:
     build:
-      context: ./dockerfiles
+      context: ./
       dockerfile: server.Dockerfile
     container_name: arranger-server.local
     depends_on:
@@ -259,7 +259,7 @@ services:
 
   arranger-ui:
     build:
-      context: ./dockerfiles
+      context: ./
       dockerfile: ui.Dockerfile
     hostname: arranger-ui.local
     container_name: arranger-ui.local
