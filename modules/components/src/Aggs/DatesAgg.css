@@ -1,0 +1,14 @@
+.DateRangePicker_picker__portal {
+  top: 0 !important;
+  bottom: 0 !important;
+}
+.DateRangePicker_picker {
+  z-index: 1000;
+}
+.datesAgg_inputRow {
+  display: flex;
+  justify-content: center;
+}
+.DateRangePickerInput_arrow_svg__small {
+  width: 55px;
+}

@@ -1,0 +1,8 @@
+.bucket .bucket-item {
+  display: flex;
+  cursor: pointer;
+}
+
+.bucket .header {
+  text-align: right;
+}
