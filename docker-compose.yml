@@ -247,19 +247,20 @@ services:
 
   arranger-server:
     build:
-      context: ./
+      context: ./dockerfiles
       dockerfile: server.Dockerfile
     container_name: arranger-server.local
     depends_on:
       - elasticsearch
+      - kibana
     ports:
       - 5050:5050
     environment:
-      ES_HOST: http://elasticsearch:9200
+      ES_HOST: http://elasticsearch.maestro.local:9200
 
   arranger-ui:
     build:
-      context: ./
+      context: ./dockerfiles
       dockerfile: ui.Dockerfile
     hostname: arranger-ui.local
     container_name: arranger-ui.local

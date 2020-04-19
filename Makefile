@@ -56,8 +56,8 @@ _ping_score_server:
 	@echo $(YELLOW)$(INFO_HEADER) "Pinging score-server on http://localhost:8087" $(END)
 	@$(RETRY_CMD) curl  \
 		-XGET \
-		-H 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5' \
-		'http://localhost:8087/download/ping'
+		--header "Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5" \
+		"http://localhost:8087/download/ping"
 	@echo ""
 
 _ping_song_server:
@@ -157,7 +157,7 @@ start-storage-services: _setup
 # Start maestro, elasticsearch, zookeeper, kafka, and the rest proxy
 start-maestro-services:
 	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
-	@$(DC_UP_CMD) arranger-ui rest-proxy
+	@$(DC_UP_CMD) arranger-ui maestro rest-proxy
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 #############################################################
