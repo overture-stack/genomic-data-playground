@@ -23,7 +23,7 @@ services:
     ports:
       - "8085:9000"
   score-server:
-    image: overture/score-server:2.0.1
+    image: overture/score-server:5.0.0
     user: "$MY_UID:$MY_GID"
     environment:
       SPRING_PROFILES_ACTIVE: amazon,collaboratory,prod,secure
@@ -40,8 +40,13 @@ services:
       AUTH_SERVER_URL: http://some-auth-server:8080/check_token/
       AUTH_SERVER_CLIENTID:  3kJhz9pNtC0pFHAxr2SPkUkGjXrkWWqGcnPC0vBP
       AUTH_SERVER_CLIENTSECRET: v9mjRtuEVwpt7cgqnsq6mxtCa5FbUOpKLGh7WX8a1dWbBKfrM3iV3VYMtE60jr3W7GLWtNeYIaJ8EUxPkaInclWVXf64qKdR3IKwyfpDU7JhvWEwIYQYdwV1YAUZjB2e
-      AUTH_SERVER_UPLOADSCOPE: song.upload
-      AUTH_SERVER_DOWNLOADSCOPE: song.download
+      AUTH_SERVER_TOKENNAME: token
+      AUTH_SERVER_SCOPE_DOWNLOAD_SYSTEM: song.download
+      AUTH_SERVER_SCOPE_DOWNLOAD_STUDY_PREFIX: song.
+      AUTH_SERVER_SCOPE_DOWNLOAD_STUDY_SUFFIX: .download
+      AUTH_SERVER_SCOPE_UPLOAD_SYSTEM: song.upload
+      AUTH_SERVER_SCOPE_UPLOAD_STUDY_PREFIX: song.
+      AUTH_SERVER_SCOPE_UPLOAD_STUDY_SUFFIX: .upload
       SERVER_SSL_ENABLED: "false"
       UPLOAD_PARTSIZE: 1073741824
       UPLOAD_CONNECTION_TIMEOUT: 1200000
@@ -59,7 +64,7 @@ services:
     volumes:
       - "./scratch/score-server-logs:/score-server/logs"
   score-client:
-    image: overture/score:2.0.1
+    image: overture/score:5.0.0
     user: "$MY_UID:$MY_GID"
     environment:
       ACCESSTOKEN: ad83ebde-a55c-11e7-abc4-cec278b6b50a
@@ -88,8 +93,8 @@ services:
     volumes:
       - "./object-storage-init/data/oicr.icgc.test/data:/score-data:ro"
   song-client:
-    image: overture/song-client:3.0.1
-    user: "$MY_UID:$MY_GID"
+    image: overture/song-client:4.2.0
+    user: root 
     environment:
       CLIENT_ACCESS_TOKEN: ad83ebde-a55c-11e7-abc4-cec278b6b50a
       CLIENT_STUDY_ID: ABC123
@@ -101,13 +106,14 @@ services:
       - "./scratch/song-client-output:/song-client/output"
     command: bin/sing
   song-server:
-    image: overture/song-server:3.0.1
+    image: overture/song-server:4.2.0
     environment:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: "prod,secure,default"
       AUTH_SERVER_URL: http://some-auth-server:8080/check_token/
       AUTH_SERVER_CLIENTID:  3kJhz9pNtC0pFHAxr2SPkUkGjXrkWWqGcnPC0vBP
       AUTH_SERVER_CLIENTSECRET: v9mjRtuEVwpt7cgqnsq6mxtCa5FbUOpKLGh7WX8a1dWbBKfrM3iV3VYMtE60jr3W7GLWtNeYIaJ8EUxPkaInclWVXf64qKdR3IKwyfpDU7JhvWEwIYQYdwV1YAUZjB2e
+      AUTH_SERVER_TOKENNAME: token
       AUTH_SERVER_SCOPE_STUDY_PREFIX: song.
       AUTH_SERVER_SCOPE_STUDY_SUFFIX: .upload
       AUTH_SERVER_SCOPE_SYSTEM: song.upload
