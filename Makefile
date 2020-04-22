@@ -56,8 +56,8 @@ _ping_score_server:
 	@echo $(YELLOW)$(INFO_HEADER) "Pinging score-server on http://localhost:8087" $(END)
 	@$(RETRY_CMD) curl  \
 		-XGET \
-		-H 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5' \
-		'http://localhost:8087/download/ping'
+		--header "Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5" \
+		"http://localhost:8087/download/ping"
 	@echo ""
 
 _ping_song_server:
@@ -156,9 +156,13 @@ start-storage-services: _setup
 
 # Start maestro, elasticsearch, zookeeper, kafka, and the rest proxy
 start-maestro-services:
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
-	@$(DC_UP_CMD) maestro rest-proxy
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
+	@$(DC_UP_CMD) arranger-ui maestro rest-proxy
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
+
+start-maestro-services-and-indexing: start-maestro-services
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
 
 #############################################################
 #  Logging Targets
@@ -212,3 +216,8 @@ test-unpublish: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
 	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD))
 
+test-elastic-status:
+	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
+	@$(CURL_EXE) -X GET "localhost:9200/_cat/indices"
+	@echo $(YELLOW)$(INFO_HEADER) "file_centric_1.0 content:" $(END)
+	@$(CURL_EXE) -X GET "localhost:9200/file_centric_1.0/_search?size=100"

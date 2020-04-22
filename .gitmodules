@@ -1,0 +1,3 @@
+[submodule "arranger"]
+	path = arranger
+	url = https://github.com/overture-stack/arranger.git
