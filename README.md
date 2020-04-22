@@ -1,6 +1,6 @@
 # Welcome to the Overture Genomic Data Playground!
 
-The purpose of this repository is to provide users with a local and isolated sandbox to play with some of Overture's genomic services, such as Song, Score and Ego. 
+The purpose of this repository is to provide users with a local and isolated sandbox to play with some of Overture's genomic services, such as Song, Score, Ego, Maestro and Arranger. 
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
 
@@ -19,16 +19,25 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
       * [GNU Make](#osx-gnu-make)
 * [Architecture](#architecture)
 * [Bootstrapped Configurations](#bootstrapped-configurations)
+   * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
    * [Ego](#ego)
    * [Score](#score)
    * [Song](#song)
    * [Object Storage](#object-storage)
-   * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
+   * [Zookeeper](#zookeeper)
+   * [ElasticSearch](#elasticsearch)
+   * [Kibana](#kibana)
+   * [Kafka Broker](#kafka)
+   * [Kafka Rest Proxy](#rest)
+   * [Maestro](#maestro)
+   * [Arranger](#arranger)
 * [Usage](#usage)
    * [Environment Setup](#environment-setup)
       * [Starting All Services and Initializing Data](#starting-all-services-and-initializing-data)
       * [Destroying All Services and Data](#destroying-all-services-and-data)
    * [Service Interaction Examples](#service-interaction-examples)
+   	  * [Index the already published analysis and start indexing the upcoming ones](#index-analysis)
+   	  * [Look for existent indices](#check-indices)
       * [Submit a payload](#submit-a-payload)
       * [Generate a manifest](#generate-a-manifest)
       * [Upload the files](#upload-the-files)
@@ -171,6 +180,28 @@ The following configurations are initialized when the services are started.
 - Minio Client Id: `minio`
 - Minio Client Secret: `minio123`
 
+### <a name="zookeeper"></a>Zookeeper
+- URL: http://localhost:2181
+
+### <a name="elasticsearch"></a>ElastiSearch
+- URL: http://localhost:9200
+
+### <a name="kibana"></a>Kibana
+- URL: http://localhost:5601
+
+### <a name="kafka"></a>Kafka Broker
+- URL: http://localhost:9092
+
+### <a name="rest"></a>Kafka Rest Proxy
+- URL: http://localhost:8082
+
+### <a name="maestro"></a>Maestro
+- URL: http://localhost:11235
+
+### <a name="arranger"></a>Arranger
+- URL: http://localhost:5050
+- UI URL: http://localhost:9080
+
 
 ## <a name="usage"></a>Usage
 The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
@@ -183,7 +214,19 @@ These scenarios are related to starting and stopping the docker services.
 To start the song, score, and ego services and initialize their data, simply run the following command:
 
 ```bash
-make start-services
+make start-storage-services
+```
+
+To start the elasticsearch, maestro, and arranger services, simply run the following command:
+
+```bash
+make start-maestro-services
+```
+
+To start the elasticsearch, maestro, and arranger services, and index the already existent files in song as well as the newly published, simply run the following command:
+
+```bash
+make start-maestro-services-and-indexing
 ```
 
 #### <a name="destroying-all-services-and-data"></a>Destroying All Services and Data
@@ -195,6 +238,17 @@ make clean
 This will delete all files and directories located in the `./scratch` directory, including logs and generated files.
 
 ### <a name="service-interaction-examples"></a>Service Interaction Examples
+
+#### <a name="index-analysis"></a>Index the already published analysis and start indexing the upcoming ones
+```bash
+curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+```
+
+#### <a name="check-indices"></a>Look for existent indices
+```bash
+curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
+```
+
 #### <a name="submit-a-payload"></a>Submit a payload
 Ping the Song server to see if its running
 ```bash
