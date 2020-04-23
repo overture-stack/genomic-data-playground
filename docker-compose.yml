@@ -119,7 +119,7 @@ services:
       - "./song-example-data:/song-client/input"
       - "./scratch/song-client-logs:/song-client/logs"
       - "./scratch/song-client-output:/song-client/output"
-    command: bin/sing
+    command: ["java", "--illegal-access=deny", "-Dlog.name=song", "-Dlog.path=/song-client/logs", "-Dlogback.configurationFile=/song-client/conf/logback.xml", "-jar", "/song-client/lib/song-client.jar", "/song-client/conf/application.yml"]
   song-server:
     image: overture/song-server:4.1.1
     environment:
