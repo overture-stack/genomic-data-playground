@@ -38,6 +38,7 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
    * [Service Interaction Examples](#service-interaction-examples)
    	  * [Index the already published analysis and start indexing the upcoming ones](#index-analysis)
    	  * [Look for existent indices](#check-indices)
+      * [Look for an index content](#index-content)
       * [Submit a payload](#submit-a-payload)
       * [Generate a manifest](#generate-a-manifest)
       * [Upload the files](#upload-the-files)
@@ -201,7 +202,14 @@ The following configurations are initialized when the services are started.
 ### <a name="arranger"></a>Arranger
 - URL: http://localhost:5050
 - UI URL: http://localhost:9080
+#### <a name="check-indices"></a>Look for existent indices
+```bash
+curl -X GET "localhost:9200/_cat/indices"
+```
 
+#### <a name="index-content"></a>Look for an index content
+```bash
+curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
 
 ## <a name="usage"></a>Usage
 The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
@@ -245,6 +253,11 @@ curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type
 ```
 
 #### <a name="check-indices"></a>Look for existent indices
+```bash
+curl -X GET "localhost:9200/_cat/indices"
+```
+
+#### <a name="index-content"></a>Look for an index content
 ```bash
 curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
 ```
