@@ -71,6 +71,22 @@ _ping_song_server:
 		'http://localhost:8080/isAlive'
 	@echo ""
 
+_ping_elasticsearch_server:
+	@echo $(YELLOW)$(INFO_HEADER) "Pinging ElasticSearch on http://localhost:9200" $(END)
+	@$(RETRY_CMD) curl --retry 10 \
+    --retry-delay 0 \
+    --retry-max-time 40 \
+    --retry-connrefuse \
+    'localhost:9200/_cluster/health?wait_for_status=yellow&timeout=100s&wait_for_active_shards=all&wait_for_no_initializing_shards=true'
+	@echo ""
+
+KIBANA_STATUS = $$(if [[ "$$(curl -X GET --max-time 15 --retry 10 --retry-delay 5 --retry-max-time 40 --retry-connrefuse http://localhost:5601/status -I 2> /dev/null | head -n1 | awk '{ print $$3 }')" = "OK"* ]]; then echo "true"; else exit 1; fi )
+
+_ping_kibana: SHELL:=/bin/bash
+_ping_kibana:
+	@echo -e $(YELLOW)$(INFO_HEADER) "Pinging kibana on http://localhost:5601" $(END)
+	@$(RETRY_CMD) $(KIBANA_STATUS)
+	@echo ""
 
 _setup-object-storage: 
 	@echo $(YELLOW)$(INFO_HEADER) "Setting up bucket oicr.icgc.test and heliograph" $(END)
@@ -158,6 +174,8 @@ start-storage-services: _setup
 start-maestro-services:
 	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
 	@$(DC_UP_CMD) arranger-ui maestro rest-proxy
+	@$(MAKE) _ping_elasticsearch_server
+	@$(MAKE) _ping_kibana
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 start-maestro-services-and-indexing: start-maestro-services
