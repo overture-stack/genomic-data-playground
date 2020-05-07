@@ -1,0 +1,187 @@
+{
+  "file_centric" : {
+    "mappings" : {
+      "properties" : {
+        "access" : {
+          "type" : "keyword"
+        },
+        "analysis" : {
+          "properties" : {
+            "experiment" : {
+              "properties" : {
+                "info" : {
+                  "properties" : {
+                    "randomField16" : {
+                      "type" : "keyword"
+                    }
+                  }
+                },
+                "matchedNormalSampleSubmitterId" : {
+                  "type" : "keyword"
+                },
+                "randomField14" : {
+                  "type" : "keyword"
+                },
+                "randomField15" : {
+                  "type" : "keyword"
+                },
+                "variantCallingTool" : {
+                  "type" : "keyword"
+                }
+              }
+            },
+            "id" : {
+              "type" : "keyword"
+            },
+            "info" : {
+              "properties" : {
+                "randomField19" : {
+                  "type" : "keyword"
+                }
+              }
+            },
+            "randomField17" : {
+              "type" : "keyword"
+            },
+            "randomField18" : {
+              "type" : "keyword"
+            },
+            "state" : {
+              "type" : "keyword"
+            },
+            "study_id" : {
+              "type" : "keyword"
+            },
+            "type" : {
+              "properties" : {
+                "name" : {
+                  "type" : "keyword"
+                },
+                "version" : {
+                  "type" : "long"
+                }
+              }
+            }
+          }
+        },
+        "donors" : {
+          "properties" : {
+            "id" : {
+              "type" : "keyword"
+            },
+            "specimen" : {
+              "properties" : {
+                "id" : {
+                  "type" : "keyword"
+                },
+                "samples" : {
+                  "properties" : {
+                    "id" : {
+                      "type" : "keyword"
+                    },
+                    "matched_normal_submitter_sample_id" : {
+                      "type" : "keyword"
+                    },
+                    "submitted_id" : {
+                      "type" : "keyword"
+                    },
+                    "type" : {
+                      "type" : "keyword"
+                    }
+                  }
+                },
+                "specimen_tissue_source" : {
+                  "type" : "keyword"
+                },
+                "submitted_id" : {
+                  "type" : "keyword"
+                },
+                "type" : {
+                  "type" : "keyword"
+                }
+              }
+            },
+            "submitted_id" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "files" : {
+          "properties" : {
+            "data_type" : {
+              "type" : "keyword"
+            },
+            "format" : {
+              "type" : "keyword"
+            },
+            "index_file" : {
+              "properties" : {
+                "data_type" : {
+                  "type" : "keyword"
+                },
+                "format" : {
+                  "type" : "keyword"
+                },
+                "md5sum" : {
+                  "type" : "keyword"
+                },
+                "name" : {
+                  "type" : "keyword"
+                },
+                "object_id" : {
+                  "type" : "keyword"
+                },
+                "size" : {
+                  "type" : "long"
+                }
+              }
+            },
+            "md5sum" : {
+              "type" : "keyword"
+            },
+            "name" : {
+              "type" : "keyword"
+            },
+            "size" : {
+              "type" : "long"
+            }
+          }
+        },
+        "object_id" : {
+          "type" : "keyword"
+        },
+        "repositories" : {
+          "properties" : {
+            "base_url" : {
+              "type" : "keyword"
+            },
+            "code" : {
+              "type" : "keyword"
+            },
+            "country" : {
+              "type" : "keyword"
+            },
+            "data_path" : {
+              "type" : "keyword"
+            },
+            "metadata_path" : {
+              "type" : "keyword"
+            },
+            "name" : {
+              "type" : "keyword"
+            },
+            "organization" : {
+              "type" : "keyword"
+            },
+            "type" : {
+              "type" : "keyword"
+            }
+          }
+        },
+        "study_id" : {
+          "type" : "keyword"
+        }
+      }
+    }
+  }
+}
