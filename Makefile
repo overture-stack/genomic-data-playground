@@ -30,8 +30,14 @@ SONG_CLIENT_LOGS_DIR  := $(SCRATCH_DIR)/song-client-logs
 SCORE_CLIENT_LOG_FILE := $(SCORE_CLIENT_LOGS_DIR)/client.log
 SONG_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/song-client-output
 SCORE_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/score-client-output
-SONG_CLIENT_ANALYSIS_ID_FILE := $(SONG_CLIENT_OUTPUT_DIR)/analysisId.txt
-SONG_CLIENT_SUBMIT_RESPONSE_FILE := $(SONG_CLIENT_OUTPUT_DIR)/submit_response.json
+SONG_CLIENT_ANALYSIS_ID_FILE_1 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId1.txt
+SONG_CLIENT_ANALYSIS_ID_FILE_2 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId2.txt
+SONG_CLIENT_ANALYSIS_ID_FILE_3 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId3.txt
+SONG_CLIENT_ANALYSIS_ID_FILE_4 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId4.txt
+SONG_CLIENT_SUBMIT_RESPONSE_FILE_1 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response1.json
+SONG_CLIENT_SUBMIT_RESPONSE_FILE_2:= $(SONG_CLIENT_OUTPUT_DIR)/submit_response2.json
+SONG_CLIENT_SUBMIT_RESPONSE_FILE_3 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response3.json
+SONG_CLIENT_SUBMIT_RESPONSE_FILE_4 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response4.json
 
 
 OUTPUT_DIRS := $(SONG_CLIENT_OUTPUT_DIR) $(SCORE_CLIENT_OUTPUT_DIR)
@@ -182,6 +188,9 @@ start-maestro-services-and-indexing: start-maestro-services
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
 
+start-services: start-storage-services
+	@$(MAKE) start-maestro-services-and-indexing
+
 #############################################################
 #  Logging Targets
 #############################################################
@@ -200,39 +209,161 @@ show-score-server-logs:
 #  Client targets
 #############################################################
 
-GET_ANALYSIS_ID_CMD := cat $(SONG_CLIENT_ANALYSIS_ID_FILE)
+GET_ANALYSIS_ID_CMD_1 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_1)
+GET_ANALYSIS_ID_CMD_2 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_2)
+GET_ANALYSIS_ID_CMD_3 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_3)
+GET_ANALYSIS_ID_CMD_4 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_4)
 
-get-analysis-id:
-	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD))
+get-analysis-id_1:
+	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_1))
 
-test-submit: start-storage-services
+get-analysis-id_2:
+	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_2))
+
+get-analysis-id_3:
+	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_3))
+
+get-analysis-id_4:
+	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_4))
+
+test-submit: test-submit_1
+
+test-submit_1: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall.json" $(END)
-	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE)
-	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE)
-	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD)) $(END)
+	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_1)
+	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_1) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_1)
+	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_1)) $(END)
 
-test-manifest: test-submit
+test-submit_2: start-storage-services
+	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall2.json" $(END)
+	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall2.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_2)
+	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_2) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_2)
+	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_2)) $(END)
+
+test-submit_3: start-storage-services
+	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall3.json" $(END)
+	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall3.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_3)
+	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_3) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_3)
+	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_3)) $(END)
+
+test-submit_4: start-storage-services
+	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall4.json" $(END)
+	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall4.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_4)
+	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_4) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_4)
+	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_4)) $(END)
+
+test-manifest: test-manifest_1
+
+test-manifest_1: test-submit_1
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
-	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD))  -f /song-client/output/manifest.txt -d /song-client/input
-	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest.txt
+	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_1))  -f /song-client/output/manifest_1.txt -d /song-client/input
+	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_1.txt
+
+test-manifest_2: test-submit_2
+	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
+	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_2))  -f /song-client/output/manifest_2.txt -d /song-client/input
+	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_2.txt
+
+test-manifest_3: test-submit_3
+	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
+	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_3))  -f /song-client/output/manifest_3.txt -d /song-client/input
+	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_3.txt
+
+test-manifest_4: test-submit_4
+	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
+	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_4))  -f /song-client/output/manifest_4.txt -d /song-client/input
+	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_4.txt
 
 # Upload a manifest using the score-client. Affected by DEMO_MODE
-test-score-upload:  test-manifest _ping_score_server 
-	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest.txt" $(END)
-	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest.txt
+test-score-upload: test-score-upload_1
 
-test-publish: _ping_song_server
-	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
-	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD))
+test-score-upload_1:  test-manifest_1 _ping_score_server 
+	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_1.txt" $(END)
+	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_1.txt
 
-test-upload-and-publish: test-score-upload _ping_song_server _ping_score_server
-	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
-	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD))
+test-score-upload_2:  test-manifest_2 _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_2.txt" $(END)
+	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_2.txt
 
+test-score-upload_3:  test-manifest_3 _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_3.txt" $(END)
+	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_3.txt
 
-test-unpublish: _ping_song_server
-	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD))" $(END)
-	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD))
+test-score-upload_4:  test-manifest_4 _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_4.txt" $(END)
+	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_4.txt
+
+test-publish: test-publish_1
+
+test-publish_1: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_1))
+
+test-publish_2: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_2))
+
+test-publish_3: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_3))
+
+test-publish_4: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_4))
+
+test-upload-and-publish: test-upload-and-publish_1
+
+test-upload-and-publish_1: test-score-upload_1 _ping_song_server _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_1))
+
+test-upload-and-publish_2: test-score-upload_2 _ping_song_server _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_2))
+
+test-upload-and-publish_3: test-score-upload_3 _ping_song_server _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_3))
+
+test-upload-and-publish_4: test-score-upload_4 _ping_song_server _ping_score_server
+	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
+	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_4))
+
+test-upload-publish-and-index: test-upload-publish-and-index_1
+
+test-upload-publish-and-index_1: test-upload-and-publish_1
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+test-upload-publish-and-index_2: test-upload-and-publish_2
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+test-upload-publish-and-index_3: test-upload-and-publish_3
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+test-upload-publish-and-index_4: test-upload-and-publish_4
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+test-workflow_1: start-services
+	@$(MAKE) test-upload-publish-and-index_1
+	@$(MAKE) test-upload-publish-and-index_2
+
+test-unpublish: test-unpublish_1
+
+test-unpublish_1: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
+	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_1))
+
+test-unpublish_2: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
+	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_2))
+
+test-unpublish_3: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
+	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_3))
+
+test-unpublish_4: _ping_song_server
+	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
+	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_4))
 
 test-elastic-status:
 	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
