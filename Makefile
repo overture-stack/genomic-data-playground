@@ -185,6 +185,7 @@ start-maestro-services:
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 start-maestro-services-and-indexing: start-maestro-services
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
 
@@ -368,5 +369,5 @@ test-unpublish_4: _ping_song_server
 test-elastic-status:
 	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
 	@$(CURL_EXE) -X GET "localhost:9200/_cat/indices"
-	@echo $(YELLOW)$(INFO_HEADER) "file_centric_1.0 content:" $(END)
-	@$(CURL_EXE) -X GET "localhost:9200/file_centric_1.0/_search?size=100"
+	@echo $(YELLOW)$(INFO_HEADER) "file_centric content:" $(END)
+	@$(CURL_EXE) -X GET "localhost:9200/file_centric/_search?size=100"
