@@ -1,6 +1,4 @@
 {
-  "file_centric" : {
-    "mappings" : {
       "properties" : {
         "access" : {
           "type" : "keyword"
@@ -182,6 +180,4 @@
           "type" : "keyword"
         }
       }
-    }
-  }
 }
