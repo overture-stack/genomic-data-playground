@@ -333,15 +333,19 @@ test-upload-and-publish_4: test-score-upload_4 _ping_song_server _ping_score_ser
 test-upload-publish-and-index: test-upload-publish-and-index_1
 
 test-upload-publish-and-index_1: test-upload-and-publish_1
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
 test-upload-publish-and-index_2: test-upload-and-publish_2
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
 test-upload-publish-and-index_3: test-upload-and-publish_3
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
 test-upload-publish-and-index_4: test-upload-and-publish_4
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
 test-workflow_1: start-services
