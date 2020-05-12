@@ -184,10 +184,13 @@ start-maestro-services:
 	@$(MAKE) _ping_kibana
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
-start-maestro-services-and-indexing: start-maestro-services
+create-elasticsearch-index: start-maestro-services
 	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
+
+start-maestro-services-and-indexing: start-maestro-services
+	@$(MAKE) create-elasticsearch-index
 
 start-services: start-storage-services
 	@$(MAKE) start-maestro-services-and-indexing

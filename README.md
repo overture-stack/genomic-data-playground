@@ -39,11 +39,13 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
    	  * [Index the already published analysis and start indexing the upcoming ones](#index-analysis)
    	  * [Look for existent indices](#check-indices)
       * [Look for an index content](#index-content)
+      * [Look for existent indices and file_centric content](#elastic-content)
       * [Submit a payload](#submit-a-payload)
       * [Generate a manifest](#generate-a-manifest)
       * [Upload the files](#upload-the-files)
       * [Publish the analysis](#publish-the-analysis)
       * [Download analysis files](#download-analysis-files)
+   * [Perform all the process at once](#all-in-one)
 * [License](#license)
 
 <!-- Added by: rtisma, at: Wed Dec  4 09:34:59 EST 2019 -->
@@ -210,12 +212,18 @@ curl -X GET "localhost:9200/_cat/indices"
 #### <a name="index-content"></a>Look for an index content
 ```bash
 curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
+```
 
 ## <a name="usage"></a>Usage
 The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
 
 ### <a name="environment-setup"></a>Environment Setup
-These scenarios are related to starting and stopping the docker services.
+These scenarios are related to starting and stopping the docker services. It is important to realize that this project contains a git submodule. In order to succesfully run the following instructions, the following commands shoud be run in the root of the repository:
+
+```bash
+git submodule init
+git submodule update
+```
 
 #### <a name="starting-all-services-and-initializing-data"></a>Starting All Services and Initializing Data
 
@@ -231,7 +239,7 @@ To start the elasticsearch, maestro, and arranger services, simply run the follo
 make start-maestro-services
 ```
 
-To start the elasticsearch, maestro, and arranger services, and index the already existent files in song as well as the newly published, simply run the following command:
+To start the elasticsearch, maestro, and arranger services, and index the already existent files in song, simply run the following command:
 
 ```bash
 make start-maestro-services-and-indexing
@@ -247,10 +255,20 @@ This will delete all files and directories located in the `./scratch` directory,
 
 ### <a name="service-interaction-examples"></a>Service Interaction Examples
 
-#### <a name="index-analysis"></a>Index the already published analysis and start indexing the upcoming ones
+#### <a name="index-analysis"></a>Index the already published analysis
+
 ```bash
+curl -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "/path/to/repository/song-example-data/file_centric_mapping.json"
 curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 ```
+
+or run the following command:
+
+```bash
+make create-elasticsearch-index
+```
+
+At this point, it is important to realize that the previous creation of the index is an optional step. Indeed, the user can only run the `curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'` and the index will be automatically created. Nevertheless, the types will be infered by ElasticSearch. In general, they are insered as `text` instead of `keyword`. This fact is incompatible with arranger, so the user is responsible to take care of the indices in ElasticSearch. In addition, it is no possible to change the type of indices that already contain some entries. Hence, this process must be done before inserting any entry.
 
 #### <a name="check-indices"></a>Look for existent indices
 ```bash
@@ -259,8 +277,15 @@ curl -X GET "localhost:9200/_cat/indices"
 
 #### <a name="index-content"></a>Look for an index content
 ```bash
-curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
+curl -X GET "localhost:9200/file_centric/_search?size=100"
 ```
+
+#### <a name="elastic-content"></a> Look for existent indices and file_centric content
+It is possible to run the previous command by just running the following command:
+```bash
+make test-elasticsearch-content
+```
+
 
 #### <a name="submit-a-payload"></a>Submit a payload
 Ping the Song server to see if its running
@@ -313,6 +338,12 @@ Using the extracted `objectId`, run the following command to download the file:
 ```
 This will download the file to the specified directory. 
 The file can be accessed on the docker host by referring to the [docker path mapping table](#docker-host-and-container-path-mappings)
+
+### <a name="all-in-one"></a>Perform all the process at once
+It is possible to launch all the workload explained in this section with a single command that initializes all the services and uploads two payloads into the system with the following command:
+```bash
+make test-workflow_1
+```
 
 ## <a name="license"></a>License
 Copyright (c) 2019. Ontario Institute for Cancer Research
