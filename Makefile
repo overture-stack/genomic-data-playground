@@ -111,6 +111,11 @@ _destroy-object-storage:
 		echo $(YELLOW)$(INFO_HEADER) "Bucket does not exist. Skipping..." $(END); \
 	fi
 
+_detroy-elastic-indices:
+	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
+	@$(CURL_EXE) -XDELETE 'http://localhost:9200/_all'
+	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
+
 _setup: init-log-dirs init-output-dirs $(SCORE_CLIENT_LOG_FILE)
 
 #############################################################
@@ -140,6 +145,8 @@ clean-docker:
 # Delete all objects from object storage
 clean-objects: _destroy-object-storage
 
+clean-elastic: _detroy-elastic-indices
+
 clean-log-dirs:
 	@echo $(YELLOW)$(INFO_HEADER) "Cleaning log directories" $(END);
 	@rm -rf $(OUTPUT_DIRS)
@@ -149,7 +156,7 @@ clean-output-dirs:
 	@rm -rf $(LOG_DIRS)
 
 # Clean everything. Kills all services, maven cleans and removes generated files/directories
-clean: clean-docker clean-log-dirs clean-output-dirs
+clean: clean-elastic clean-docker clean-log-dirs clean-output-dirs
 
 #############################################################
 #  Building targets

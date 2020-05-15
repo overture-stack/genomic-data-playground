@@ -148,6 +148,7 @@ services:
       - score-server
     volumes:
       - "./scratch/song-server-logs:/song-server/logs"
+    command: ["java", "-Dlog.path=/song-server/logs", "-jar", "/song-server.jar", "--spring.config.location=classpath:/bootstrap.properties,classpath:/application.yml"]
   maestro:
     image: overture/maestro:latest
     container_name: maestro
