@@ -34,10 +34,10 @@ dependency-reduced-pom.xml
 # Javascript Temporary Files
 npm-debug.log
 .cake_task_cache
-public/
+public/       #Necessary in order to build arranger
 node_modules/
 dist/
-components/
+components/   #Necessary in order to build arranger
 .sass-cache/
 .tmp/
 unit.xml
@@ -88,3 +88,8 @@ song-client/.factorypath
 song-core/.factorypath
 
 song-server/.factorypath
+
+.Rhistory
+*swp
+*swo
+*swn

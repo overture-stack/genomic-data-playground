@@ -108,7 +108,7 @@ services:
     volumes:
       - "./object-storage-init/data/oicr.icgc.test/data:/score-data:ro"
   song-client:
-    image: overture/song-client:3.0.1
+    image: overture/song-client:4.1.1
     user: "$MY_UID:$MY_GID"
     environment:
       CLIENT_ACCESS_TOKEN: f69b726d-d40f-4261-b105-1ec7e6bf04d5
@@ -119,9 +119,9 @@ services:
       - "./song-example-data:/song-client/input"
       - "./scratch/song-client-logs:/song-client/logs"
       - "./scratch/song-client-output:/song-client/output"
-    command: bin/sing
+    command: ["java", "--illegal-access=deny", "-Dlog.name=song", "-Dlog.path=/song-client/logs", "-Dlogback.configurationFile=/song-client/conf/logback.xml", "-jar", "/song-client/lib/song-client.jar", "/song-client/conf/application.yml"]
   song-server:
-    image: overture/song-server:3.0.1
+    image: overture/song-server:4.1.1
     environment:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: "prod,secure,default"
@@ -148,6 +148,125 @@ services:
       - score-server
     volumes:
       - "./scratch/song-server-logs:/song-server/logs"
+  maestro:
+    image: overture/maestro:latest
+    container_name: maestro
+    ports:
+      - 11235:11235
+    environment:
+      - maestro.elasticsearch.cluster-nodes=elasticsearch.maestro.local:9200
+      - spring.cloud.stream.kafka.binder.brokers=kafka.maestro.local:9092
+      - management.health.elasticsearch.enabled=false
+      - management.security.enabled=false
+      - MAESTRO_REPOSITORIES_0_CODE=local_song
+      - MAESTRO_REPOSITORIES_0_URL=http://song-server:8080 # or whatever url it is
+      - MAESTRO_REPOSITORIES_0_NAME=local_song_city
+      - MAESTRO_REPOSITORIES_0_DATAPATH=/project/data
+      - MAESTRO_REPOSITORIES_0_METADATAPATH=/metadata/data
+      - MAESTRO_REPOSITORIES_0_ORGANIZATION=local_song_organization
+      - MAESTRO_REPOSITORIES_0_COUNTRY=local_song_country
+    depends_on:
+       - elasticsearch
+       - broker
+  admin:
+    image: basharlabadi/vanilla-admin-boot:0.0.2
+    environment:
+      - spring.boot.admin.security.enabled=false
+    ports:
+      - 1122:1122
+    healthcheck:
+      test: "curl -sS http://localhost:1111/health"
+      interval: 1s
+      timeout: 60s
+      retries: 120
+    container_name: boot-admin
 
-volumes:
-    object-storage-data: {}
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.0
+    container_name: elasticsearch.maestro.local
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+      - cluster.name=maestro.elasticsearch
+      - "ES_JAVA_OPTS=-Xms512m -Xmx2048m"
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - 2181:2181
+  # see : https://docs.confluent.io/current/quickstart/ce-docker-quickstart.html#ce-docker-quickstart
+  broker:
+    image: confluentinc/cp-kafka:5.4.0
+    hostname: kafka.maestro.local
+    container_name: kafka.maestro.local
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka.maestro.local:29092,PLAINTEXT_HOST://kafka.maestro.local:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka.maestro.local:29092
+      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /tmp/kafka:/kafka
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:5.4.0
+    depends_on:
+      - zookeeper
+      - broker
+    ports:
+      - 8082:8082
+    hostname: rest-proxy
+    container_name: rest-proxy
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: kafka.maestro.local:29092
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.0
+    ports:
+      - 5601:5601
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    depends_on:
+      - elasticsearch
+    environment:
+      LOGGING_QUIET: "true"
+
+  arranger-server:
+    build:
+      context: ./arranger
+      dockerfile: server.Dockerfile
+    container_name: arranger-server.local
+    depends_on:
+      - elasticsearch
+      - kibana
+    ports:
+      - 5050:5050
+    environment:
+      ES_HOST: http://elasticsearch.maestro.local:9200
+
+  arranger-ui:
+    build:
+      context: ./arranger
+      dockerfile: ui.Dockerfile
+    hostname: arranger-ui.local
+    container_name: arranger-ui.local
+    depends_on:
+      - arranger-server
+    ports:
+      - 9080:8080
+      - 9081:8081
+
