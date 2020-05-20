@@ -1,5 +1,3 @@
-# Welcome to the Overture Genomic Data Playground!
-
 The purpose of this repository is to provide users with a local and isolated sandbox to play with some of Overture's genomic services, such as Song, Score, Ego, Maestro and Arranger. 
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
@@ -183,7 +181,7 @@ The following configurations are initialized when the services are started.
 ### <a name="zookeeper"></a>Zookeeper
 - URL: http://localhost:2181
 
-### <a name="elasticsearch"></a>ElastiSearch
+### <a name="elasticsearch"></a>ElasticSearch
 - URL: http://localhost:9200
 
 ### <a name="kibana"></a>Kibana

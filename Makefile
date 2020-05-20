@@ -3,6 +3,7 @@
 # Required System files
 DOCKER_COMPOSE_EXE := $(shell which docker-compose)
 CURL_EXE := $(shell which curl)
+GIT_EXE := $(shell which git)
 
 # Variables
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -43,6 +44,7 @@ DOCKER_COMPOSE_CMD := MY_UID=$(MY_UID) MY_GID=$(MY_GID) $(DOCKER_COMPOSE_EXE) -f
 SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client java --illegal-access=deny -Dlog.name=song -Dlog.path=/song-client/logs -Dlogback.configurationFile=/song-client/conf/logback.xml -jar /song-client/lib/song-client.jar /song-client/conf/application.yml
 SCORE_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) score-client bin/score-client
 DC_UP_CMD := $(DOCKER_COMPOSE_CMD) up -d --build
+GIT_CMD := $(GIT_EXE) -C $(ROOT_DIR)
 
 #############################################################
 # Internal Targets
@@ -89,7 +91,12 @@ _destroy-object-storage:
 		echo $(YELLOW)$(INFO_HEADER) "Bucket does not exist. Skipping..." $(END); \
 	fi
 
-_setup: init-log-dirs init-output-dirs $(SCORE_CLIENT_LOG_FILE)
+_setup-git-submodules:
+	@echo $(YELLOW)$(INFO_HEADER) "Setting up git submodules" $(END)
+	@$(GIT_CMD) submodule update --init --recursive
+
+
+_setup: init-log-dirs init-output-dirs $(SCORE_CLIENT_LOG_FILE) _setup-git-submodules
 
 #############################################################
 # Help
@@ -154,10 +161,10 @@ start-storage-services: _setup
 	@$(MAKE) _setup-object-storage
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
-# Start maestro, elasticsearch, zookeeper, kafka, and the rest proxy
-start-maestro-services:
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper, kafka, and the rest proxy" $(END)
-	@$(DC_UP_CMD) arranger-ui maestro rest-proxy
+# Start maestro, elasticsearch, zookeeper and kafka-broker
+start-maestro-services: _setup-git-submodules
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper and kafka-broker" $(END)
+	@$(DC_UP_CMD) arranger-ui maestro
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 start-maestro-services-and-indexing: start-maestro-services
