@@ -34,6 +34,12 @@
               }
             }
           },
+          "analysis_type" : {
+            "type" : "keyword"
+          },
+          "analysis_id" : {
+            "type" : "keyword"
+          },
           "id" : {
             "type" : "keyword"
           },
@@ -73,7 +79,10 @@
           "id" : {
             "type" : "keyword"
           },
-          "specimen" : {
+          "gender" : {
+            "type" : "keyword"
+          },
+          "specimens" : {
             "properties" : {
               "id" : {
                 "type" : "keyword"
@@ -89,6 +98,12 @@
                   "submitted_id" : {
                     "type" : "keyword"
                   },
+                  "sample_type" : {
+                    "type" : "keyword"
+                  },
+									"submitter_sample_id" : {
+                    "type" : "keyword"
+                  },
                   "type" : {
                     "type" : "keyword"
                   }
@@ -97,7 +112,19 @@
               "specimen_tissue_source" : {
                 "type" : "keyword"
               },
+              "specimen_type" : {
+                "type" : "keyword"
+              },
               "submitted_id" : {
+                "type" : "keyword"
+              },
+              "submitter_specimen_id" : {
+                "type" : "keyword"
+              },
+              "submitter_normal_designation" : {
+                "type" : "keyword"
+              },
+              "tumour_normal_designation" : {
                 "type" : "keyword"
               },
               "type" : {
@@ -105,10 +132,19 @@
               }
             }
           },
+          "submitter_donor_id" : {
+            "type" : "keyword"
+          },
           "submitted_id" : {
             "type" : "keyword"
           }
         }
+      },
+			"file_access" : {
+				"type" : "keyword"
+			},
+      "file_type" : {
+        "type" : "keyword"
       },
       "files" : {
         "properties" : {
@@ -179,7 +215,10 @@
           },
           "type" : {
             "type" : "keyword"
-          }
+          },
+					"url" : {
+						"type": "keyword"
+					}
         }
       },
       "study_id" : {
