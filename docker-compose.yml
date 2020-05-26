@@ -166,7 +166,7 @@ services:
       - "./scratch/song-server-logs:/song-server/logs"
     command: ["java", "-Dlog.path=/song-server/logs", "-jar", "/song-server.jar", "--spring.config.location=classpath:/bootstrap.properties,classpath:/application.yml"]
   maestro:
-    image: overture/maestro:latest
+    image: overture/maestro:2.0.0
     container_name: maestro
     ports:
       - 11235:11235

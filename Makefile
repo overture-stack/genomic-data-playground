@@ -113,9 +113,10 @@ _destroy-object-storage:
 		echo $(YELLOW)$(INFO_HEADER) "Bucket does not exist. Skipping..." $(END); \
 	fi
 
-_detroy-elastic-indices:
+_destroy-elastic-indices:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
-	@$(CURL_EXE) -XDELETE 'http://localhost:9200/_all'
+	#@$(CURL_EXE) -XDELETE 'http://localhost:9200/_all'
+	@$(CURL_EXE) -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }' | xargs -i $(CURL_EXE) -XDELETE "http://localhost:9200/{}?pretty"
 	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
 
 _setup-git-submodules:
@@ -151,7 +152,7 @@ clean-docker:
 # Delete all objects from object storage
 clean-objects: _destroy-object-storage
 
-clean-elastic: _detroy-elastic-indices
+clean-elastic: _destroy-elastic-indices
 
 clean-log-dirs:
 	@echo $(YELLOW)$(INFO_HEADER) "Cleaning log directories" $(END);
@@ -195,6 +196,7 @@ start-maestro-services: _setup-git-submodules
 	@$(DC_UP_CMD) arranger-ui maestro
 	@$(MAKE) _ping_elasticsearch_server
 	@$(MAKE) _ping_kibana
+	@$(MAKE) _destroy-elastic-indices
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 create-elasticsearch-index: start-maestro-services
