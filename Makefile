@@ -370,6 +370,14 @@ test-workflow_1: start-services
 	@$(MAKE) test-upload-publish-and-index_1
 	@$(MAKE) test-upload-publish-and-index_2
 
+test-workflow_1_partial: start-services
+	@$(MAKE) test-upload-publish-and-index_1
+	@$(MAKE) test-upload-and-publish_2
+
+test-workflow_1_kafka: start-services
+	@$(MAKE) test-upload-and-publish_1
+	@$(MAKE) test-upload-and-publish_2
+
 test-unpublish: test-unpublish_1
 
 test-unpublish_1: _ping_song_server

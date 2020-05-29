@@ -259,6 +259,8 @@ services:
       - kibana
     environment:
       ES_HOST: http://elasticsearch:9200
+    ports:
+      - 5050:5050
     expose:
       - 5050
 
