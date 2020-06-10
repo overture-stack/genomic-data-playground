@@ -371,6 +371,49 @@ To configure the fields that will be shown in the website, arranger must be conf
 
 <img src="images/add_project.png" width="50%">
 
+5. Click on the project name
+
+In this screen, there are 3 important tabs:
+
+* Fields: it allows to rename the fields and specify their type
+
+* Aggs Panel: it allows to select the information that will be available to do the filtering 
+
+* Table: it allows to select the available fields that will be shown in the central table
+
+At this stage, `arranger` cannot have fields of type `id` with this name. Hence, in this scenario, they have to be changed to `keyword`. In order to do so:
+
+6. Filter the fields by `Type` equal to `id`.
+
+7. In the top right corner, change the `Aggregation Type` from `id` to `keyword` to all fields that are named `id`. In this case, the concerned fields are:
+
+* analysis.id
+* donors.id
+* donors.specimens.id
+* donors.specimens.samples.id
+
+8. Click on the `Aggs Panel` tab
+
+<img src="images/aggs_panel.png" width="50%">
+
+9. Check the box `Shown` for those fields that you want to show in the aggregation panel. It is also possible to disable some parameters if you don't want them to be accessible from the website.
+
+10. Click on tthe `Table` tab
+
+<img src="images/table.png" width="50%">
+
+11. Select the fields that will be shown by default in the table. In addition, you can disable the fields that you don't want to be accessible from there.
+
+12. Click on `Save Project`, on the top right corner
+
+<img src="images/modified_project.png" width="10%">
+
+At this point, the setup is finished. It is already possible to open `localhost:3000` in a web browser, go to the `File Repository` and select the project and index we have just created.
+
+<img src="images/file_repository.png" width="50%">
+
+If you have already accessed this project previously, you may need to erase the cookies to select a project. In Chrome, this can be done by selecting the `i` icon next to the url, click on `Site settings`. Afterwards, click on the button `Clear data`. This way, you will keep all the other information stored by the navigator.
+
 ## <a name="license"></a>License
 Copyright (c) 2019. Ontario Institute for Cancer Research
 
