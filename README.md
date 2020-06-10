@@ -123,11 +123,12 @@ For Score the back-end object storage service that was used was [Minio](https://
 
 For more information on these services, visit the [Song documentation](https://song-docs.readthedocs.io), [Ego documentation](https://ego.readthedocs.io) and [Score documentation](https://score-docs.readthedocs.io). 
 
-<img src="architecture.png" width="50%">
+<img src="images/architecture.png" width="50%">
 
 
 ## <a name="bootstrapped-configurations"></a>Bootstrapped Configurations
 
+<<<<<<< Updated upstream
 ### <a name="docker-host-and-container-path-mappings"></a>Docker host and container path mappings
 Since all clients and services communicate through a docker network, any files from the docker host that are to be used with the clients must be mounted into the docker containers. 
 Similarly, any files that need to be output from the containers to the docker host must also be mounted. Since these files are not apart of this repository, they can be located in the `./scratch` directory.
@@ -211,6 +212,9 @@ curl -X GET "localhost:9200/_cat/indices"
 ```bash
 curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
 ```
+=======
+In this [document](docs/BootstrappedConfiguration.md) a wide description of the configuration used to build the project can be found.
+>>>>>>> Stashed changes
 
 ## <a name="usage"></a>Usage
 The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
@@ -237,11 +241,22 @@ To start the elasticsearch, maestro, and arranger services, simply run the follo
 make start-maestro-services
 ```
 
-To start the elasticsearch, maestro, and arranger services, and index the already existent files in song, simply run the following command:
+To start the webpage, simply run the following command:
+
+```bash
+make start-website
+```
+
+To start the elasticsearch, maestro, and arranger services, the website and index the already existent files in song, simply run the following command:
 
 ```bash
 make start-maestro-services-and-indexing
 ```
+
+To execute all the previous steps, simply run the following command:
+ ```bash
+make start-all-services
+ ```
 
 #### <a name="destroying-all-services-and-data"></a>Destroying All Services and Data
 
@@ -283,7 +298,6 @@ It is possible to run the previous command by just running the following command
 ```bash
 make test-elasticsearch-content
 ```
-
 
 #### <a name="submit-a-payload"></a>Submit a payload
 Ping the Song server to see if its running
@@ -342,6 +356,20 @@ It is possible to launch all the workload explained in this section with a singl
 ```bash
 make test-workflow_1
 ```
+
+### <a name="arranger-conf"></a>Website configuration
+
+To configure the fields that will be shown in the website, arranger must be configured. This can be done through the `localhost:9080` endpoint:
+
+1. Click on `Add Project`
+
+2. Enter the project name in the `Project ID` field.
+
+3. Click on `Add Index`
+
+4. Fill the fields `Name` with the Arranger alias for the elasticsearch index and `ES index` with the elasticsearch index.
+
+<img src="images/add_project.png" width="50%">
 
 ## <a name="license"></a>License
 Copyright (c) 2019. Ontario Institute for Cancer Research

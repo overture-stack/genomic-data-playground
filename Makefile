@@ -199,13 +199,20 @@ start-maestro-services: _setup-git-submodules
 	@$(MAKE) _destroy-elastic-indices
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
+start-website: _setup-git-submodules
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the webpage" $(END)
+	@$(DC_UP_CMD) web-portal
+	@echo $(YELLOW)$(INFO_HEADER) "Succesfully started website!" $(END)
+
 create-elasticsearch-index: start-maestro-services
 	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
 
-start-maestro-services-and-indexing: start-maestro-services
+start-maestro-services-and-indexing: start-maestro-services start-website
 	@$(MAKE) create-elasticsearch-index
+
+start-all-services: start-storage-services start-maestro-services-and-indexing
 
 start-services: start-storage-services
 	@$(MAKE) start-maestro-services-and-indexing
@@ -366,7 +373,7 @@ test-upload-publish-and-index_4: test-upload-and-publish_4
 	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
-test-workflow_1: start-services
+test-workflow_1: start-all-services
 	@$(MAKE) test-upload-publish-and-index_1
 	@$(MAKE) test-upload-publish-and-index_2
 

@@ -275,3 +275,15 @@ services:
     environment:
       REACT_APP_ARRANGER_ADMIN_ROOT: http://arranger-server:5050/admin/graphql
 
+  web-portal:
+    build:
+      context: ./iPC_Data_Portal
+      dockerfile: portal.Dockerfile
+    container_name: web-portal
+    depends_on:
+      - arranger-server
+    ports:
+      - 3000:3000
+    environment:
+      ES_HOST: http://elasticsearch:9200
+      ARRANGER_API: http://arranger-server:5050
