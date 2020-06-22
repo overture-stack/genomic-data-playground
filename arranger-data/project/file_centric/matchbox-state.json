@@ -1,0 +1,10 @@
+[
+  {
+    "displayName": "index_alias",
+    "field": "",
+    "isActive": false,
+    "keyField": null,
+    "searchFields": [],
+    "__typename": "MatchBoxField"
+  }
+]

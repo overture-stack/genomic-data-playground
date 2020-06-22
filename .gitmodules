@@ -1,6 +1,0 @@
-[submodule "arranger"]
-	path = arranger
-	url = https://github.com/overture-stack/arranger.git
-[submodule "iPC_Data_Portal"]
-	path = iPC_Data_Portal
-	url = https://github.com/ramonamela/iPC_Data_Portal.git

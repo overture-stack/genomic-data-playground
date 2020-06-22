@@ -19,6 +19,7 @@ services:
     command: java -jar /srv/ego/install/ego.jar
     depends_on:
       - ego-db
+
   ego-db:
     image: postgres:9.5
     container_name: ego-db
@@ -31,6 +32,7 @@ services:
       - "./ego-init:/docker-entrypoint-initdb.d"
     ports:
       - "9444:5432"
+
   object-storage:
     #NOTE: must use 2018-05-11 version, since the ETag rules are different. 2018 will return the part md5, anything newer will not, and score-server expects etag==md5
     image: minio/minio:RELEASE.2018-05-11T00-29-24Z
@@ -46,6 +48,7 @@ services:
       retries: 3
     ports:
       - "8085:9000"
+
   score-server:
     #TODO: rtisma - upgrade score server version
     image: overture/score-server:2.0.1
@@ -84,6 +87,7 @@ services:
       - ego-server
     volumes:
       - "./scratch/score-server-logs:/score-server/logs"
+
   score-client:
     #TODO: rtisma - upgrade score client version
     image: overture/score:2.0.1
@@ -99,6 +103,7 @@ services:
       - "./scratch/score-client-output:/score-client/output"
       - "./scratch/song-client-output:/song-client/output"
     command: bin/score-client
+
   song-db:
     image: "postgres:9.6"
     container_name: song-db
@@ -108,6 +113,7 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - "./song-db-init:/docker-entrypoint-initdb.d"
+
   aws-cli:
     image: "mesosphere/aws-cli:latest"
     container_name: aws-cli
@@ -117,6 +123,7 @@ services:
       AWS_DEFAULT_REGION: us-east-1
     volumes:
       - "./object-storage-init/data/oicr.icgc.test/data:/score-data:ro"
+
   song-client:
     #TODO: rtisma - upgrade client version
     image: overture/song-client:4.1.1
@@ -132,9 +139,10 @@ services:
       - "./scratch/song-client-logs:/song-client/logs"
       - "./scratch/song-client-output:/song-client/output"
     command: ["java", "--illegal-access=deny", "-Dlog.name=song", "-Dlog.path=/song-client/logs", "-Dlogback.configurationFile=/song-client/conf/logback.xml", "-jar", "/song-client/lib/song-client.jar", "/song-client/conf/application.yml"]
+
   song-server:
     #TODO: rtisma - upgrade server version
-    image: overture/song-server:4.1.1
+    image: overture/song-server:4.2.2
     container_name: song-server
     environment:
       SERVER_PORT: 8080
@@ -165,6 +173,7 @@ services:
     volumes:
       - "./scratch/song-server-logs:/song-server/logs"
     command: ["java", "-Dlog.path=/song-server/logs", "-jar", "/song-server.jar", "--spring.config.location=classpath:/bootstrap.properties,classpath:/application.yml"]
+
   maestro:
     image: overture/maestro:2.0.0
     container_name: maestro
@@ -185,6 +194,7 @@ services:
     depends_on:
        - elasticsearch
        - kafka-broker
+
   admin:
     image: basharlabadi/vanilla-admin-boot:0.0.2
     container_name: admin
@@ -275,15 +285,15 @@ services:
     environment:
       REACT_APP_ARRANGER_ADMIN_ROOT: http://arranger-server:5050/admin/graphql
 
-  web-portal:
-    build:
-      context: ./iPC_Data_Portal
-      dockerfile: portal.Dockerfile
-    container_name: web-portal
+  arranger-portal:
+    image: overture/arranger-server:05886ce
+    container_name: arranger-portal
     depends_on:
       - arranger-server
     ports:
       - 3000:3000
     environment:
-      ES_HOST: http://elasticsearch:9200
-      ARRANGER_API: http://arranger-server:5050
+      STORYBOOK_PORTAL: "true"
+    working_dir: /app/modules/components
+    command: npx start-storybook -p 3000 -c .storybook -s ./public
+

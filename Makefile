@@ -31,12 +31,14 @@ SONG_CLIENT_LOGS_DIR  := $(SCRATCH_DIR)/song-client-logs
 SCORE_CLIENT_LOG_FILE := $(SCORE_CLIENT_LOGS_DIR)/client.log
 SONG_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/song-client-output
 SCORE_CLIENT_OUTPUT_DIR := $(SCRATCH_DIR)/score-client-output
+
 SONG_CLIENT_ANALYSIS_ID_FILE_1 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId1.txt
 SONG_CLIENT_ANALYSIS_ID_FILE_2 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId2.txt
 SONG_CLIENT_ANALYSIS_ID_FILE_3 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId3.txt
 SONG_CLIENT_ANALYSIS_ID_FILE_4 := $(SONG_CLIENT_OUTPUT_DIR)/analysisId4.txt
+
 SONG_CLIENT_SUBMIT_RESPONSE_FILE_1 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response1.json
-SONG_CLIENT_SUBMIT_RESPONSE_FILE_2:= $(SONG_CLIENT_OUTPUT_DIR)/submit_response2.json
+SONG_CLIENT_SUBMIT_RESPONSE_FILE_2 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response2.json
 SONG_CLIENT_SUBMIT_RESPONSE_FILE_3 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response3.json
 SONG_CLIENT_SUBMIT_RESPONSE_FILE_4 := $(SONG_CLIENT_OUTPUT_DIR)/submit_response4.json
 
@@ -105,6 +107,9 @@ _setup-object-storage:
 	fi
 	@$(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 cp /score-data/heliograph s3://oicr.icgc.test/data/heliograph
 
+_setup-es-mapping:
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+
 _destroy-object-storage:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing bucket oicr.icgc.test" $(END)
 	@if  $(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 ls s3://oicr.icgc.test ; then \
@@ -113,17 +118,18 @@ _destroy-object-storage:
 		echo $(YELLOW)$(INFO_HEADER) "Bucket does not exist. Skipping..." $(END); \
 	fi
 
+## This should be called if analyses were published before maestro service was started
+_trigger_maestro_indexing:
+	@echo $(YELLOW)$(INFO_HEADER) "Manually triggering indexing in maestro" $(END);
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
 _destroy-elastic-indices:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
 	#@$(CURL_EXE) -XDELETE 'http://localhost:9200/_all'
 	@$(CURL_EXE) -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }' | xargs -i $(CURL_EXE) -XDELETE "http://localhost:9200/{}?pretty"
 	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
 
-_setup-git-submodules:
-	@echo $(YELLOW)$(INFO_HEADER) "Setting up git submodules" $(END)
-	@$(GIT_CMD) submodule update --init --recursive
-
-_setup: init-log-dirs init-output-dirs $(SCORE_CLIENT_LOG_FILE) _setup-git-submodules
+_setup: _init-log-dirs _init-output-dirs $(SCORE_CLIENT_LOG_FILE)
 
 #############################################################
 # Help
@@ -139,6 +145,18 @@ help:
 	@echo "Available Targets: "
 	@grep '^[A-Za-z][A-Za-z0-9_-]\+:.*' $(ROOT_DIR)/Makefile | sed 's/:.*//' | sed 's/^/\t/'
 	@echo
+
+#############################################################
+#  Building targets
+#############################################################
+
+_init-output-dirs:
+	@echo $(YELLOW)$(INFO_HEADER) "Initializing output directories" $(END);
+	@mkdir -p $(OUTPUT_DIRS)
+
+_init-log-dirs:
+	@echo $(YELLOW)$(INFO_HEADER) "Initializing log directories" $(END);
+	@mkdir -p $(LOG_DIRS)
 
 #############################################################
 #  Cleaning targets
@@ -166,18 +184,6 @@ clean-output-dirs:
 clean: clean-elastic clean-docker clean-log-dirs clean-output-dirs
 
 #############################################################
-#  Building targets
-#############################################################
-
-init-output-dirs:
-	@echo $(YELLOW)$(INFO_HEADER) "Initializing output directories" $(END);
-	@mkdir -p $(OUTPUT_DIRS)
-
-init-log-dirs:
-	@echo $(YELLOW)$(INFO_HEADER) "Initializing log directories" $(END);
-	@mkdir -p $(LOG_DIRS)
-
-#############################################################
 #  Docker targets
 #############################################################
 
@@ -191,31 +197,24 @@ start-storage-services: _setup
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
 
 # Start maestro, elasticsearch, zookeeper and kafka-broker
-start-maestro-services: _setup-git-submodules
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger, maestro, elasticsearch, zookeeper and kafka-broker" $(END)
-	@$(DC_UP_CMD) arranger-ui maestro
+start-maestro-services:
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, zookeeper and kafka-broker" $(END)
+	@$(DC_UP_CMD) maestro
 	@$(MAKE) _ping_elasticsearch_server
 	@$(MAKE) _ping_kibana
 	@$(MAKE) _destroy-elastic-indices
-	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
+	@$(MAKE) _setup-es-mapping
+	@$(MAKE) _trigger_maestro_indexing
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully started maestro services! $(END)
 
-start-website: _setup-git-submodules
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the webpage" $(END)
-	@$(DC_UP_CMD) web-portal
-	@echo $(YELLOW)$(INFO_HEADER) "Succesfully started website!" $(END)
+start-arranger-services:
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: arranger-server, arranger-ui and arranger-portal" $(END)
+	@$(MAKE) _ping_elasticsearch_server
+	@$(MAKE) _ping_kibana
+	@$(DC_UP_CMD) arranger-ui arranger-portal
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully started arranger services! $(END)
 
-create-elasticsearch-index: start-maestro-services
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-	@echo $(YELLOW)$(INDO_HEADER) The indexing of song files has been launched! $(END)
-
-start-maestro-services-and-indexing: start-maestro-services start-website
-	@$(MAKE) create-elasticsearch-index
-
-start-all-services: start-storage-services start-maestro-services-and-indexing
-
-start-services: start-storage-services
-	@$(MAKE) start-maestro-services-and-indexing
+start-all-services: start-storage-services start-maestro-services start-arranger-services
 
 #############################################################
 #  Logging Targets
@@ -240,171 +239,190 @@ GET_ANALYSIS_ID_CMD_2 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_2)
 GET_ANALYSIS_ID_CMD_3 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_3)
 GET_ANALYSIS_ID_CMD_4 := cat $(SONG_CLIENT_ANALYSIS_ID_FILE_4)
 
-get-analysis-id_1:
-	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_1))
+_get-analysis-id_1:
+	@echo "The cached analysisId_1 is " $$($(GET_ANALYSIS_ID_CMD_1))
 
-get-analysis-id_2:
-	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_2))
+_get-analysis-id_2:
+	@echo "The cached analysisId_2 is " $$($(GET_ANALYSIS_ID_CMD_2))
 
-get-analysis-id_3:
-	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_3))
+_get-analysis-id_3:
+	@echo "The cached analysisId_3 is " $$($(GET_ANALYSIS_ID_CMD_3))
 
-get-analysis-id_4:
-	@echo "The cached analysisId is " $$($(GET_ANALYSIS_ID_CMD_4))
+_get-analysis-id_4:
+	@echo "The cached analysisId_4 is " $$($(GET_ANALYSIS_ID_CMD_4))
 
-test-submit: test-submit_1
-
-test-submit_1: start-storage-services
+#-----------------------------------------------------------------
+# Song Submission
+#-----------------------------------------------------------------
+_test-submit_1: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall.json" $(END)
 	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_1)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_1) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_1)
 	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_1)) $(END)
 
-test-submit_2: start-storage-services
+_test-submit_2: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall2.json" $(END)
 	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall2.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_2)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_2) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_2)
 	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_2)) $(END)
 
-test-submit_3: start-storage-services
+_test-submit_3: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall3.json" $(END)
 	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall3.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_3)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_3) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_3)
 	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_3)) $(END)
 
-test-submit_4: start-storage-services
+_test-submit_4: start-storage-services
 	@echo $(YELLOW)$(INFO_HEADER) "Submitting payload /song-client/input/exampleVariantCall4.json" $(END)
 	@$(SONG_CLIENT_CMD) submit -f /song-client/input/exampleVariantCall4.json | tee $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_4)
 	@cat $(SONG_CLIENT_SUBMIT_RESPONSE_FILE_4) | grep analysisId | sed 's/.*://' | sed 's/"\|,//g'  > $(SONG_CLIENT_ANALYSIS_ID_FILE_4)
 	@echo $(YELLOW)$(INFO_HEADER) "Successfully submitted. Cached analysisId: " $$($(GET_ANALYSIS_ID_CMD_4)) $(END)
 
-test-manifest: test-manifest_1
-
-test-manifest_1: test-submit_1
+#-----------------------------------------------------------------
+# Song manifest creation
+#-----------------------------------------------------------------
+_test-manifest_1: _test-submit_1
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
 	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_1))  -f /song-client/output/manifest_1.txt -d /song-client/input
 	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_1.txt
 
-test-manifest_2: test-submit_2
+_test-manifest_2: _test-submit_2
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
 	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_2))  -f /song-client/output/manifest_2.txt -d /song-client/input
 	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_2.txt
 
-test-manifest_3: test-submit_3
+_test-manifest_3: _test-submit_3
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
 	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_3))  -f /song-client/output/manifest_3.txt -d /song-client/input
 	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_3.txt
 
-test-manifest_4: test-submit_4
+_test-manifest_4: _test-submit_4
 	@echo $(YELLOW)$(INFO_HEADER) "Creating manifest at /song-client/output" $(END)
 	@$(SONG_CLIENT_CMD) manifest -a $$($(GET_ANALYSIS_ID_CMD_4))  -f /song-client/output/manifest_4.txt -d /song-client/input
 	@cat $(SONG_CLIENT_OUTPUT_DIR)/manifest_4.txt
 
-# Upload a manifest using the score-client. Affected by DEMO_MODE
-test-score-upload: test-score-upload_1
-
-test-score-upload_1:  test-manifest_1 _ping_score_server 
+#-----------------------------------------------------------------
+# Score upload
+#-----------------------------------------------------------------
+_test-score-upload_1:  _test-manifest_1 _ping_score_server 
 	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_1.txt" $(END)
 	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_1.txt
 
-test-score-upload_2:  test-manifest_2 _ping_score_server
+_test-score-upload_2:  _test-manifest_2 _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_2.txt" $(END)
 	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_2.txt
 
-test-score-upload_3:  test-manifest_3 _ping_score_server
+_test-score-upload_3:  _test-manifest_3 _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_3.txt" $(END)
 	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_3.txt
 
-test-score-upload_4:  test-manifest_4 _ping_score_server
+_test-score-upload_4:  _test-manifest_4 _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Uploading manifest /song-client/output/manifest_4.txt" $(END)
 	@$(SCORE_CLIENT_CMD) upload --manifest /song-client/output/manifest_4.txt
 
-test-publish: test-publish_1
-
-test-publish_1: _ping_song_server
+#-----------------------------------------------------------------
+# Song publish
+#-----------------------------------------------------------------
+_test-publish_1: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_1))
 
-test-publish_2: _ping_song_server
+_test-publish_2: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_2))
 
-test-publish_3: _ping_song_server
+_test-publish_3: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_3))
 
-test-publish_4: _ping_song_server
+_test-publish_4: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_4))
 
-test-upload-and-publish: test-upload-and-publish_1
-
-test-upload-and-publish_1: test-score-upload_1 _ping_song_server _ping_score_server
+#-----------------------------------------------------------------
+# Song submit, manfest generation, score upload and song publish
+#-----------------------------------------------------------------
+_test-upload-and-publish_1: _test-score-upload_1 _ping_song_server _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_1))
 
-test-upload-and-publish_2: test-score-upload_2 _ping_song_server _ping_score_server
+_test-upload-and-publish_2: _test-score-upload_2 _ping_song_server _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_2))
 
-test-upload-and-publish_3: test-score-upload_3 _ping_song_server _ping_score_server
+_test-upload-and-publish_3: _test-score-upload_3 _ping_song_server _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_3))
 
-test-upload-and-publish_4: test-score-upload_4 _ping_song_server _ping_score_server
+_test-upload-and-publish_4: _test-score-upload_4 _ping_song_server _ping_score_server
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_4))
 
-test-upload-publish-and-index: test-upload-publish-and-index_1
+#rtisma   #-----------------------------------------------------------------
+#rtisma   # Song submit, manfest generation, score upload, song publish and index
+#rtisma   #-----------------------------------------------------------------
+#rtisma   test-upload-publish-and-index_1: test-upload-and-publish_1
+#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+#rtisma   
+#rtisma   test-upload-publish-and-index_2: test-upload-and-publish_2
+#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+#rtisma   
+#rtisma   test-upload-publish-and-index_3: test-upload-and-publish_3
+#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+#rtisma   
+#rtisma   test-upload-publish-and-index_4: test-upload-and-publish_4
+#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
 
-test-upload-publish-and-index_1: test-upload-and-publish_1
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
-test-upload-publish-and-index_2: test-upload-and-publish_2
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
-test-upload-publish-and-index_3: test-upload-and-publish_3
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
-test-upload-publish-and-index_4: test-upload-and-publish_4
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
-test-workflow_1: start-all-services
-	@$(MAKE) test-upload-publish-and-index_1
-	@$(MAKE) test-upload-publish-and-index_2
-
-test-workflow_1_partial: start-services
-	@$(MAKE) test-upload-publish-and-index_1
-	@$(MAKE) test-upload-and-publish_2
-
-test-workflow_1_kafka: start-services
-	@$(MAKE) test-upload-and-publish_1
-	@$(MAKE) test-upload-and-publish_2
-
-test-unpublish: test-unpublish_1
-
-test-unpublish_1: _ping_song_server
+#-----------------------------------------------------------------
+# Song unpublish
+#-----------------------------------------------------------------
+_test-unpublish_1: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_1))" $(END)
 	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_1))
 
-test-unpublish_2: _ping_song_server
+_test-unpublish_2: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_2))" $(END)
 	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_2))
 
-test-unpublish_3: _ping_song_server
+_test-unpublish_3: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_3))" $(END)
 	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_3))
 
-test-unpublish_4: _ping_song_server
+_test-unpublish_4: _ping_song_server
 	@echo $(YELLOW)$(INFO_HEADER) "Unpublishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
 	@$(SONG_CLIENT_CMD) unpublish -a $$($(GET_ANALYSIS_ID_CMD_4))
 
+
+#################################################################
+#  Main
+#################################################################
 test-elastic-status:
 	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
 	@$(CURL_EXE) -X GET "localhost:9200/_cat/indices"
 	@echo $(YELLOW)$(INFO_HEADER) "file_centric content:" $(END)
 	@$(CURL_EXE) -X GET "localhost:9200/file_centric/_search?size=100"
+
+# Submit several song payloads
+test-submit: _test-submit_1 _test-submit_2 _test-submit_3 _test-submit_4
+
+# Get analysisIds
+get-analysis-ids: _get-analysis-id_1 _get-analysis-id_2 _get-analysis-id_3 _get-analysis-id_4
+
+# Generate several manifest
+test-manifest: _test-manifest_1 _test-manifest_2 _test-manifest_3 _test-manifest_4
+
+# Upload several manifest to score
+test-score-upload: _test-score-upload_1 _test-score-upload_2 _test-score-upload_3 _test-score-upload_4
+
+# Publish several analyses
+test-publish: _test-publish_1 _test-publish_2 _test-publish_3 _test-publish_4
+
+# Submit, create manifest, upload to score and publish
+test-upload-and-publish: _test-upload-and-publish_1 _test-upload-and-publish_2 _test-upload-and-publish_3 _test-upload-and-publish_4
+#test-upload-publish-and-index: test-upload-publish-and-index_1 test-upload-publish-and-index_2 test-upload-publish-and-index_3 test-upload-publish-and-index_4
+
+test-unpublish: _test-unpublish_1 _test-unpublish_2 _test-unpublish_3 _test-unpublish_4
