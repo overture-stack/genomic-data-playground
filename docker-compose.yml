@@ -2,7 +2,7 @@ version: '3.7'
 services:
   ego-server:
     #TODO: rtisma - upgrade ego server version
-    image: "overture/ego:2.9.0"
+    image: "overture/ego:3.1.0"
     container_name: ego-server
     environment:
       SERVER_PORT: 8080
@@ -11,7 +11,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_LOCATIONS: "classpath:flyway/sql,classpath:db/migration"
-      SPRING_PROFILES: demo, auth
+      SPRING_PROFILES_ACTIVE: demo
     expose:
       - "8080"
     ports:
