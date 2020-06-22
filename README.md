@@ -247,6 +247,12 @@ Once the files of an analysis are uploaded, the analysis can be published using 
 ./tools/song-client publish -a <analysisId>
 ```
 
+#### <a name="unpublish-the-analysis"></a>Publish the analysis
+In order to overwrite files to score, the analysis must be unpublished. They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
+```bash
+./tools/song-client unpublish -a <analysisId>
+```
+
 #### <a name="download-analysis-files"></a>Download analysis files
 
 Before downloading a file, the `objectId` must be known. 
@@ -268,7 +274,7 @@ The file can be accessed on the docker host by referring to the [docker path map
 ### <a name="all-in-one"></a>Perform all the process at once
 It is possible to launch all the workload explained in this section with a single command that initializes all the services and uploads two payloads into the system with the following command:
 ```bash
-make test-workflow_1
+make test-workflow
 ```
 
 ### <a name="arranger-conf"></a>Website configuration

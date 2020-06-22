@@ -358,25 +358,6 @@ _test-upload-and-publish_4: _test-score-upload_4 _ping_song_server _ping_score_s
 	@echo $(YELLOW)$(INFO_HEADER) "Publishing analysis: $$($(GET_ANALYSIS_ID_CMD_4))" $(END)
 	@$(SONG_CLIENT_CMD) publish -a $$($(GET_ANALYSIS_ID_CMD_4))
 
-#rtisma   #-----------------------------------------------------------------
-#rtisma   # Song submit, manfest generation, score upload, song publish and index
-#rtisma   #-----------------------------------------------------------------
-#rtisma   test-upload-publish-and-index_1: test-upload-and-publish_1
-#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-#rtisma   
-#rtisma   test-upload-publish-and-index_2: test-upload-and-publish_2
-#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-#rtisma   
-#rtisma   test-upload-publish-and-index_3: test-upload-and-publish_3
-#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-#rtisma   
-#rtisma   test-upload-publish-and-index_4: test-upload-and-publish_4
-#rtisma   	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
-#rtisma   	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
 #-----------------------------------------------------------------
 # Song unpublish
 #-----------------------------------------------------------------
@@ -426,3 +407,5 @@ test-upload-and-publish: _test-upload-and-publish_1 _test-upload-and-publish_2 _
 #test-upload-publish-and-index: test-upload-publish-and-index_1 test-upload-publish-and-index_2 test-upload-publish-and-index_3 test-upload-publish-and-index_4
 
 test-unpublish: _test-unpublish_1 _test-unpublish_2 _test-unpublish_3 _test-unpublish_4
+
+test-workflow: start-all-services test-upload-and-publish
