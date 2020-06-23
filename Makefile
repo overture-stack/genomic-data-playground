@@ -108,7 +108,7 @@ _setup-object-storage:
 	@$(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 cp /score-data/heliograph s3://oicr.icgc.test/data/heliograph
 
 _setup-es-mapping:
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/song-example-data/file_centric_mapping.json"
+	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/arranger-data/index/file_centric_mapping.json"
 
 _destroy-object-storage:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing bucket oicr.icgc.test" $(END)
@@ -125,7 +125,6 @@ _trigger_maestro_indexing:
 
 _destroy-elastic-indices:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
-	#@$(CURL_EXE) -XDELETE 'http://localhost:9200/_all'
 	@$(CURL_EXE) -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }' | xargs -i $(CURL_EXE) -XDELETE "http://localhost:9200/{}?pretty"
 	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
 
