@@ -107,7 +107,7 @@ services:
     command: bin/score-client
 
   song-db:
-    image: "postgres:9.6"
+    image: postgres:11.1
     container_name: song-db
     environment:
       POSTGRES_DB: song
@@ -127,8 +127,7 @@ services:
       - "./object-storage-init/data/oicr.icgc.test/data:/score-data:ro"
 
   song-client:
-    #TODO: rtisma - upgrade client version
-    image: overture/song-client:4.1.1
+    image: overture/song-client:4.2.2
     container_name: song-client
     user: "$MY_UID:$MY_GID"
     environment:
@@ -143,7 +142,6 @@ services:
     command: ["java", "--illegal-access=deny", "-Dlog.name=song", "-Dlog.path=/song-client/logs", "-Dlogback.configurationFile=/song-client/conf/logback.xml", "-jar", "/song-client/lib/song-client.jar", "/song-client/conf/application.yml"]
 
   song-server:
-    #TODO: rtisma - upgrade server version
     image: overture/song-server:4.2.2
     container_name: song-server
     environment:
@@ -221,7 +219,7 @@ services:
       ES_JAVA_OPTS: -Xms512m -Xmx2048m
 
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: wurstmeister/zookeeper:3.4.6
     container_name: zookeeper
     expose:
       - 2181
