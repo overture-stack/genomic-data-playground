@@ -49,8 +49,7 @@ services:
       - "8085:9000"
 
   score-server:
-    #TODO: rtisma - upgrade score server version
-    image: overture/score-server:2.0.1
+    image: overture/score-server:5.0.0
     container_name: score-server
     user: "$MY_UID:$MY_GID"
     environment:
@@ -68,8 +67,13 @@ services:
       AUTH_SERVER_URL: http://ego-server:8080/o/check_token/
       AUTH_SERVER_CLIENTID: score
       AUTH_SERVER_CLIENTSECRET: scoresecret
-      AUTH_SERVER_UPLOADSCOPE: score.WRITE
-      AUTH_SERVER_DOWNLOADSCOPE: score.READ
+      AUTH_SERVER_TOKENNAME: token
+      AUTH_SERVER_SCOPE_DOWNLOAD_SYSTEM: score.READ
+      AUTH_SERVER_SCOPE_DOWNLOAD_STUDY_PREFIX: score.
+      AUTH_SERVER_SCOPE_DOWNLOAD_STUDY_SUFFIX: .READ
+      AUTH_SERVER_SCOPE_UPLOAD_SYSTEM: score.WRITE
+      AUTH_SERVER_SCOPE_UPLOAD_STUDY_PREFIX: score.
+      AUTH_SERVER_SCOPE_UPLOAD_STUDY_SUFFIX: .WRITE
       SERVER_SSL_ENABLED: "false"
       UPLOAD_PARTSIZE: 1073741824
       UPLOAD_CONNECTION_TIMEOUT: 1200000
@@ -88,8 +92,7 @@ services:
       - "./scratch/score-server-logs:/score-server/logs"
 
   score-client:
-    #TODO: rtisma - upgrade score client version
-    image: overture/score:2.0.1
+    image: overture/score:5.0.0
     container_name: score-client
     user: "$MY_UID:$MY_GID"
     environment:
