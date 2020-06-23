@@ -1,7 +1,6 @@
 version: '3.7'
 services:
   ego-server:
-    #TODO: rtisma - upgrade ego server version
     image: "overture/ego:3.1.0"
     container_name: ego-server
     environment:
@@ -21,7 +20,7 @@ services:
       - ego-db
 
   ego-db:
-    image: postgres:9.5
+    image: postgres:11.1
     container_name: ego-db
     environment:
       - POSTGRES_DB=ego
