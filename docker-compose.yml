@@ -187,10 +187,10 @@ services:
       MAESTRO_REPOSITORIES_0_CODE: local_song
       MAESTRO_REPOSITORIES_0_URL: http://song-server:8080 # or whatever url it is
       MAESTRO_REPOSITORIES_0_NAME: local_song_city
-      MAESTRO_REPOSITORIES_0_DATAPATH: /project/data
-      MAESTRO_REPOSITORIES_0_METADATAPATH: /metadata/data
       MAESTRO_REPOSITORIES_0_ORGANIZATION: local_song_organization
       MAESTRO_REPOSITORIES_0_COUNTRY: local_song_country
+      MAESTRO_REPOSITORIES_0_DATAPATH: /project/data
+      MAESTRO_REPOSITORIES_0_METADATAPATH: /metadata/data
     depends_on:
        - elasticsearch
        - kafka-broker
@@ -262,7 +262,7 @@ services:
       LOGGING_QUIET: "true"
 
   arranger-server:
-    image: overture/arranger-server:05886ce
+    image: overture/arranger-server:2.2.3
     container_name: arranger-server
     depends_on:
       - elasticsearch
@@ -275,7 +275,7 @@ services:
       - 5050
 
   arranger-ui:
-    image: overture/arranger-ui:05886ce
+    image: overture/arranger-ui:2.2.3
     container_name: arranger-ui
     depends_on:
       - arranger-server
@@ -286,7 +286,7 @@ services:
       REACT_APP_ARRANGER_ADMIN_ROOT: http://arranger-server:5050/admin/graphql
 
   arranger-portal:
-    image: overture/arranger-server:05886ce
+    image: overture/arranger-server:2.2.3
     container_name: arranger-portal
     depends_on:
       - arranger-server
