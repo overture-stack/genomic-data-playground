@@ -249,13 +249,17 @@ The following sections describe Makefile targets and how they can be executed to
 [Back to Contents](#toc)
 
 ### <a name="environment-setup"></a>Environment Setup
-These scenarios are related to starting and stopping the docker services. It is important to realize that this project contains a git submodule. In order to succesfully run the following instructions, the following commands shoud be run in the root of the repository:
+These scenarios are related to starting and stopping the docker services.  In order to successfully run the following instructions, the following commands shoud be run in the root directory of the repository.
+
+#### <a name="clone-repo"></a>Cloning the Repository
+Firstly, clone this repo and ensure you are in the root directory:
 
 ```bash
-git submodule init
-git submodule update
-```
+git clone https://github.com/overture-stack/genomic-data-playground
 
+# Switch to the root directory of the repo
+cd genomic-data-playground
+```
 
 #### <a name="starting-all-services-and-initializing-data"></a>Starting All Services and Initializing Data
 
