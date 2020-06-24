@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASH_SCRIPT=`readlink -f ${BASH_SOURCE[0]}`
+BASH_SCRIPT=`realpath ${BASH_SOURCE[0]}`
 BASH_SCRIPT_DIR=$( dirname  "${BASH_SCRIPT}")
 
 MY_UID=`id -u`
