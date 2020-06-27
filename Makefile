@@ -49,7 +49,8 @@ LOG_DIRS := $(SCORE_SERVER_LOGS_DIR) $(SCORE_CLIENT_LOGS_DIR) $(SONG_SERVER_LOGS
 
 # Commands
 DOCKER_COMPOSE_CMD := MY_UID=$(MY_UID) MY_GID=$(MY_GID) $(DOCKER_COMPOSE_EXE) -f $(ROOT_DIR)/docker-compose.yml
-SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client java --illegal-access=deny -Dlog.name=song -Dlog.path=/song-client/logs -Dlogback.configurationFile=/song-client/conf/logback.xml -jar /song-client/lib/song-client.jar /song-client/conf/application.yml
+#SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client java --illegal-access=deny -Dlog.name=song -Dlog.path=/song-client/logs -Dlogback.configurationFile=/song-client/conf/logback.xml -jar /song-client/lib/song-client.jar /song-client/conf/application.yml
+SONG_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) song-client ./bin/sing
 SCORE_CLIENT_CMD := $(DOCKER_COMPOSE_CMD) run --rm -u $(THIS_USER) score-client bin/score-client
 DC_UP_CMD := $(DOCKER_COMPOSE_CMD) up -d --build
 GIT_CMD := $(GIT_EXE) -C $(ROOT_DIR)
@@ -87,7 +88,7 @@ _ping_elasticsearch_server:
     --retry-delay 0 \
     --retry-max-time 40 \
     --retry-connrefuse \
-    'localhost:9200/_cluster/health?wait_for_status=yellow&timeout=100s&wait_for_active_shards=all&wait_for_no_initializing_shards=true'
+	'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=100s&wait_for_no_initializing_shards=true'
 	@echo ""
 
 KIBANA_STATUS = $$(if [[ "$$(curl -X GET --max-time 15 --retry 10 --retry-delay 5 --retry-max-time 40 --retry-connrefuse http://localhost:5601/status -I 2> /dev/null | head -n1 | awk '{ print $$3 }')" = "OK"* ]]; then echo "true"; else exit 1; fi )
@@ -98,6 +99,19 @@ _ping_kibana:
 	@$(RETRY_CMD) $(KIBANA_STATUS)
 	@echo ""
 
+_ping_maestro:
+	@echo $(YELLOW)$(INFO_HEADER) "Pinging Maestro on http://localhost:11235" $(END)
+	@$(RETRY_CMD) curl --retry 10 \
+    --retry-delay 0 \
+    --retry-max-time 40 \
+    --retry-connrefuse \
+	http://localhost:11235
+	@$(RETRY_CMD) curl --retry 10 \
+    --retry-delay 0 \
+    --retry-max-time 40 \
+    --retry-connrefuse \
+	http://localhost:9200/file_centric
+
 _setup-object-storage: 
 	@echo $(YELLOW)$(INFO_HEADER) "Setting up bucket oicr.icgc.test and heliograph" $(END)
 	@if  $(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 ls s3://oicr.icgc.test ; then \
@@ -107,9 +121,6 @@ _setup-object-storage:
 	fi
 	@$(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 cp /score-data/heliograph s3://oicr.icgc.test/data/heliograph
 
-_setup-es-mapping:
-	@$(CURL_EXE) -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "@$(ROOT_DIR)/arranger-data/index/file_centric_mapping.json"
-
 _destroy-object-storage:
 	@echo $(YELLOW)$(INFO_HEADER) "Removing bucket oicr.icgc.test" $(END)
 	@if  $(DOCKER_COMPOSE_CMD) run aws-cli --endpoint-url http://object-storage:9000 s3 ls s3://oicr.icgc.test ; then \
@@ -117,16 +128,6 @@ _destroy-object-storage:
 	else \
 		echo $(YELLOW)$(INFO_HEADER) "Bucket does not exist. Skipping..." $(END); \
 	fi
-
-## This should be called if analyses were published before maestro service was started
-_trigger_maestro_indexing:
-	@echo $(YELLOW)$(INFO_HEADER) "Manually triggering indexing in maestro" $(END);
-	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-
-_destroy-elastic-indices:
-	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
-	@$(CURL_EXE) -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }' | xargs -i $(CURL_EXE) -XDELETE "http://localhost:9200/{}?pretty"
-	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
 
 _setup: _init-log-dirs _init-output-dirs $(SCORE_CLIENT_LOG_FILE)
 
@@ -169,7 +170,11 @@ clean-docker:
 # Delete all objects from object storage
 clean-objects: _destroy-object-storage
 
-clean-elastic: _destroy-elastic-indices
+# Destroy all non-arranger and non-kibana elasticsearch indices
+clean-elastic:
+	@echo $(YELLOW)$(INFO_HEADER) "Removing ElasticSearch indices" $(END)
+	@$(CURL_EXE) -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }' | xargs -i $(CURL_EXE) -XDELETE "http://localhost:9200/{}?pretty"
+	@echo $(YELLOW)$(INFO_HEADER) "ElasticSearch indices removed" $(END)
 
 clean-log-dirs:
 	@echo $(YELLOW)$(INFO_HEADER) "Cleaning log directories" $(END);
@@ -183,27 +188,50 @@ clean-output-dirs:
 clean: clean-elastic clean-docker clean-log-dirs clean-output-dirs
 
 #############################################################
+#  Indexing targets
+#############################################################
+
+# Just delete the documents, not the entire index.
+clear-es-documents:
+	@echo $(YELLOW)$(INFO_HEADER) "Deleting elasticsearch documents" $(END)
+	@$(CURL_EXE) -s -X GET "http://localhost:9200/_cat/indices" | grep -v kibana | grep -v arranger | grep -v configuration | awk '{ print $$3 }'  | sed  's/^/http:\/\/localhost:9200\//' | sed 's/$$/\/_delete_by_query/' | xargs $(CURL_EXE) -XPOST --header 'Content-Type: application/json' -d '{"query":{"match_all":{}}}'
+
+## This should be called if analyses were published before maestro service was started
+trigger-maestro-indexing:
+	@echo $(YELLOW)$(INFO_HEADER) "Manually triggering indexing in maestro" $(END);
+	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+#############################################################
 #  Docker targets
 #############################################################
 
-# Start ego, song, score, and object-storage.
+ps:
+	@echo $(YELLOW)$(INFO_HEADER) "Showing running services" $(END)
+	@$(DOCKER_COMPOSE_CMD) ps
+
+stop-all-services:
+	@echo $(YELLOW)$(INFO_HEADER) "Stopping all services" $(END)
+	@$(DOCKER_COMPOSE_CMD) ps --services | xargs $(DOCKER_COMPOSE_EXE) stop
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully stopped all services! $(END)
+
+
+# Start ego, song, score, object-storage, and kafka-broker.
 start-storage-services: _setup
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: ego, score, song, score and object-storage" $(END)
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: ego, score, song, score, object-storage and kafka-broker" $(END)
 	@$(DC_UP_CMD) ego-server score-server song-server object-storage
 	@$(MAKE) _ping_song_server
 	@$(MAKE) _ping_score_server
 	@$(MAKE) _setup-object-storage
-	@echo $(YELLOW)$(INFO_HEADER) Succesfully started services! $(END)
+	@echo $(YELLOW)$(INFO_HEADER) Succesfully started storage services! $(END)
 
 # Start maestro, elasticsearch, zookeeper and kafka-broker
 start-maestro-services:
-	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, zookeeper and kafka-broker" $(END)
-	@$(DC_UP_CMD) maestro
-	@$(MAKE) _ping_elasticsearch_server
+	@echo $(YELLOW)$(INFO_HEADER) "Starting the following services: maestro, elasticsearch, kibana, zookeeper and kafka-broker" $(END)
+	@$(DC_UP_CMD) maestro kibana
 	@$(MAKE) _ping_kibana
-	@$(MAKE) _destroy-elastic-indices
-	@$(MAKE) _setup-es-mapping
-	@$(MAKE) _trigger_maestro_indexing
+	@$(MAKE) _ping_elasticsearch_server
+	@$(MAKE) _ping_maestro
+	@$(MAKE) trigger-maestro-indexing
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started maestro services! $(END)
 
 start-arranger-services:
@@ -212,6 +240,13 @@ start-arranger-services:
 	@$(MAKE) _ping_kibana
 	@$(DC_UP_CMD) arranger-ui arranger-portal
 	@echo $(YELLOW)$(INFO_HEADER) Succesfully started arranger services! $(END)
+
+start-reindex:
+	@echo $(YELLOW)$(INFO_HEADER) "Starting reindex" $(END)
+	@$(MAKE) _ping_elasticsearch_server
+	@$(MAKE) _ping_maestro
+	@$(MAKE) clear-es-documents
+	@$(MAKE) trigger-maestro-indexing
 
 start-all-services: start-storage-services start-maestro-services start-arranger-services
 

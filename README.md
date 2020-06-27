@@ -28,23 +28,28 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
    * [ElasticSearch](#elasticsearch)
    * [Kibana](#kibana)
    * [Kafka Broker](#kafka)
-   * [Kafka Rest Proxy](#rest)
    * [Maestro](#maestro)
    * [Arranger](#arranger)
 * [Usage](#usage)
    * [Environment Setup](#environment-setup)
       * [Starting All Services and Initializing Data](#starting-all-services-and-initializing-data)
+      * [Stopping All Services](#stopping-all-services)
       * [Destroying All Services and Data](#destroying-all-services-and-data)
    * [Service Interaction Examples](#service-interaction-examples)
    	  * [Index the already published analysis and start indexing the upcoming ones](#index-analysis)
    	  * [Look for existent indices](#check-indices)
       * [Look for an index content](#index-content)
       * [Look for existent indices and file_centric content](#elastic-content)
+   * [Interaction Examples with Storage Services](#storage-services-interaction-examples)
+      * [Check Song is running](#health-check)
+      * [Create a Study](#create-study)
       * [Submit a payload](#submit-a-payload)
       * [Generate a manifest](#generate-a-manifest)
       * [Upload the files](#upload-the-files)
       * [Publish the analysis](#publish-the-analysis)
       * [Download analysis files](#download-analysis-files)
+   * [Interaction Examples with Indexing Services](#indexing-services-interaction-examples)
+   * [Interaction Examples with Portal Services](#portal-services-interaction-examples)
    * [Perform all the process at once](#all-in-one)
 * [License](#license)
 
@@ -219,9 +224,6 @@ The following configurations are initialized when the services are started.
 ### <a name="kafka"></a>Kafka Broker
 - URL: http://localhost:9092
 
-### <a name="rest"></a>Kafka Rest Proxy
-- URL: http://localhost:8082
-
 ### <a name="maestro"></a>Maestro
 - URL: http://localhost:11235
 
@@ -263,38 +265,47 @@ cd genomic-data-playground
 
 #### <a name="starting-all-services-and-initializing-data"></a>Starting All Services and Initializing Data
 
-To start the song, score, and ego services and initialize their data, simply run the following command:
+To start the song, score, ego and kafka services and initialize their data, simply run the following command:
 
 ```bash
 make start-storage-services
 ```
 
-To start the elasticsearch, maestro, and arranger services, simply run the following command:
+To start the elasticsearch, kafka, and maestro services simply run the following command:
 
 ```bash
 make start-maestro-services
 ```
 
-To start the webpage, simply run the following command:
+To start the arranger server, arranger admin ui, and arranger portal simply run the following command:
 
 ```bash
-make start-website
+make start-arrangers-services
 ```
 
+<!-- 
+TODO: fix this
+-->
 To start the elasticsearch, maestro, and arranger services, the website and index the already existent files in song, simply run the following command:
 
 ```bash
 make start-maestro-services-and-indexing
 ```
 
-To execute all the previous steps, simply run the following command:
+To execute all the previous steps and start all services, simply run the command below. Since there are many services, it will take several minutes for the command to complete.
+
  ```bash
 make start-all-services
  ```
 
-#### <a name="destroying-all-services-and-data"></a>Destroying All Services and Data
+#### <a name="stopping-all-services"></a>Stopping All Services
+To just halt all services without deleting any data, run:
+ ```bash
+make stop-all-services
+ ```
 
-To stop all services and delete their data, run:
+#### <a name="destroying-all-services-and-data"></a>Destroying All Services and Data
+To kill all services and delete their data, run:
 ```bash
 make clean
 ```
@@ -333,18 +344,48 @@ It is possible to run the previous command by just running the following command
 make test-elasticsearch-content
 ```
 
-#### <a name="submit-a-payload"></a>Submit a payload
+### <a name="storage-services-interaction-examples"></a>Interaction Examples with Storage Services
+This section contains the instructions for interacting with the storage services: `song` and `score`. The examples below are the most common use cases and were crafted in a way to allow the user to interact with a docker network of running services. For a more documentation on these services, please refer to the [Song documentation](https://song-docs.readthedocs.io/) and the [Score documentation](https://score-docs.readthedocs.io/)
+
+#### <a name="health-check"></a>Check Song is running
 Ping the Song server to see if its running
 ```bash
 ./tools/song-client ping
 ```
 
+[Back to Contents](#toc)
+
+#### <a name="create-study"></a>Create a Study
+Before submitting any data, a study must be created. The study used in this playground is `ABC123`.
+In this repository, the study `ABC123` does not need to be created because the song database is automatically bootstrapped for convenience. However, a new studyId `myNewStudyId` is created as follows:
+
+```bash
+curl -X POST \
+  --header 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5'  \
+  -d '{"studyId":"myNewStudyId"}' \
+  http://localhost:8080/studies/myNewStudyId/
+```
+
+[Back to Contents](#toc)
+
+#### <a name="submit-a-payload"></a>Submit a payload
 Submit the `exampleVariantCall.json` file located in the `/song-client/input` directory
 ```bash
 ./tools/song-client submit -f /song-client/input/exampleVariantCall.json
 ```
 
 If successful, the output will contain the `analysisId` which will be needed in the following steps.
+
+Alternatively, the following command can be run, which will:
+  - ensure all corresponding services are running
+  - execute the above command for several payloads, including the one above
+  - return the `analysisId` for each submitted payload
+
+```bash
+make test-submit
+```
+
+[Back to Contents](#toc)
 
 #### <a name="generate-a-manifest"></a>Generate a manifest
 Using the `analysisId` from the previous [submit step](#submit-a-payload) execute the following command to generate a `manifest.txt` file.
@@ -353,6 +394,8 @@ Using the `analysisId` from the previous [submit step](#submit-a-payload) execut
 ./tools/song-client manifest -f /song-client/output/manifest.txt -d /song-client/input -a <analysisId>
 ```
 The output `manifest.txt` file is used with the `score-client` to upload the files.
+
+[Back to Contents](#toc)
 
 #### <a name="upload-the-files"></a>Upload the files
 Using the `manifest.txt` from the previous [manifest generation step](#generate-a-manifest) execute the following command to upload files to the object storage
@@ -367,11 +410,15 @@ Once the files of an analysis are uploaded, the analysis can be published using 
 ./tools/song-client publish -a <analysisId>
 ```
 
+[Back to Contents](#toc)
+
 #### <a name="unpublish-the-analysis"></a>Publish the analysis
 In order to overwrite files to score, the analysis must be unpublished. They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
 ```bash
 ./tools/song-client unpublish -a <analysisId>
 ```
+
+[Back to Contents](#toc)
 
 #### <a name="download-analysis-files"></a>Download analysis files
 
@@ -391,11 +438,23 @@ Using the extracted `objectId`, run the following command to download the file:
 This will download the file to the specified directory. 
 The file can be accessed on the docker host by referring to the [docker path mapping table](#docker-host-and-container-path-mappings)
 
+[Back to Contents](#toc)
+
 ### <a name="all-in-one"></a>Perform all the process at once
 It is possible to launch all the workload explained in this section with a single command that initializes all the services and uploads two payloads into the system with the following command:
 ```bash
 make test-workflow
 ```
+
+[Back to Contents](#toc)
+
+### <a name="indexing-services-interaction-examples"></a>Interaction Examples with Indexing Services
+<!-- TODO:  -->
+
+[Back to Contents](#toc)
+
+### <a name="portal-services-interaction-examples"></a>Interaction Examples with Portal Services
+<!-- TODO:  -->
 
 [Back to Contents](#toc)
 
@@ -459,7 +518,7 @@ If you have already accessed this project previously, you may need to erase the 
 [Back to Contents](#toc)
 
 ## <a name="license"></a>License
-Copyright (c) 2019. Ontario Institute for Cancer Research
+Copyright (c) 2020. Ontario Institute for Cancer Research
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

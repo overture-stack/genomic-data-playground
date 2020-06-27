@@ -1,36 +1,12 @@
 [
   {
-    "field": "study_id",
-    "active": true,
-    "show": true,
+    "field": "analysis__analysis_id",
+    "active": false,
+    "show": false,
     "__typename": "AggState"
   },
   {
-    "field": "file_type",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "file_access",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__data_type",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "repositories__country",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__state",
+    "field": "analysis__analysis_state",
     "active": true,
     "show": true,
     "__typename": "AggState"
@@ -43,12 +19,66 @@
   },
   {
     "field": "analysis__analysis_version",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "analysis__experiment",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "data_type",
     "active": true,
     "show": true,
     "__typename": "AggState"
   },
   {
+    "field": "donors__donor_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
     "field": "donors__gender",
+    "active": true,
+    "show": true,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__samples__matched_normal_submitter_sample_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__samples__sample_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__samples__sample_type",
+    "active": true,
+    "show": true,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__samples__submitter_sample_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__specimen_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "donors__specimens__specimen_tissue_source",
     "active": true,
     "show": true,
     "__typename": "AggState"
@@ -60,9 +90,9 @@
     "__typename": "AggState"
   },
   {
-    "field": "donors__specimens__specimen_tissue_source",
-    "active": true,
-    "show": true,
+    "field": "donors__specimens__submitter_specimen_id",
+    "active": false,
+    "show": false,
     "__typename": "AggState"
   },
   {
@@ -72,157 +102,91 @@
     "__typename": "AggState"
   },
   {
-    "field": "donors__specimens__samples__sample_type",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__samples__matched_normal_submitter_sample_id",
-    "active": true,
-    "show": true,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__experiment__randomField14",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__experiment__randomField15",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__info__randomField19",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__randomField17",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__randomField18",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__study_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__type__name",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__type__version",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__samples__submitted_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__samples__submitter_sample_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__samples__type",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__submitted_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__submitter_normal_designation",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__submitter_specimen_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__type",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__submitted_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
     "field": "donors__submitter_donor_id",
     "active": false,
     "show": false,
     "__typename": "AggState"
   },
   {
-    "field": "files__format",
+    "field": "file__index_file__file_type",
+    "active": true,
+    "show": true,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file__index_file__md5sum",
     "active": false,
     "show": false,
     "__typename": "AggState"
   },
   {
-    "field": "analysis__experiment__matchedNormalSampleSubmitterId",
+    "field": "file__index_file__name",
     "active": false,
     "show": false,
     "__typename": "AggState"
   },
   {
-    "field": "files__index_file__md5sum",
+    "field": "file__index_file__object_id",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file__index_file__size",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file__md5sum",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file__name",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file__size",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file_access",
+    "active": true,
+    "show": true,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file_autocomplete",
+    "active": false,
+    "show": false,
+    "__typename": "AggState"
+  },
+  {
+    "field": "file_type",
+    "active": true,
+    "show": true,
+    "__typename": "AggState"
+  },
+  {
+    "field": "object_id",
     "active": false,
     "show": false,
     "__typename": "AggState"
   },
   {
     "field": "repositories__code",
-    "active": false,
-    "show": false,
+    "active": true,
+    "show": true,
     "__typename": "AggState"
   },
   {
-    "field": "repositories__data_path",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "repositories__metadata_path",
+    "field": "repositories__country",
     "active": false,
     "show": false,
     "__typename": "AggState"
@@ -240,117 +204,15 @@
     "__typename": "AggState"
   },
   {
-    "field": "repositories__type",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "access",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__index_file__name",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__experiment__info__randomField16",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "repositories__base_url",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "object_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__name",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__size",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__md5sum",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__index_file__object_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__index_file__format",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__index_file__data_type",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "files__index_file__size",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__analysis_id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
     "field": "repositories__url",
     "active": false,
     "show": false,
     "__typename": "AggState"
   },
   {
-    "field": "donors__id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "analysis__experiment__variantCallingTool",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__id",
-    "active": false,
-    "show": false,
-    "__typename": "AggState"
-  },
-  {
-    "field": "donors__specimens__samples__id",
-    "active": false,
-    "show": false,
+    "field": "study_id",
+    "active": true,
+    "show": true,
     "__typename": "AggState"
   }
 ]

@@ -1,8 +1,40 @@
 [
   {
-    "displayName": "index_alias",
+    "displayName": "some_alias",
     "field": "",
     "isActive": false,
+    "keyField": null,
+    "searchFields": [],
+    "__typename": "MatchBoxField"
+  },
+  {
+    "displayName": "Donors",
+    "field": "donors",
+    "isActive": true,
+    "keyField": null,
+    "searchFields": [],
+    "__typename": "MatchBoxField"
+  },
+  {
+    "displayName": "Donors Specimens",
+    "field": "donors.specimens",
+    "isActive": true,
+    "keyField": null,
+    "searchFields": [],
+    "__typename": "MatchBoxField"
+  },
+  {
+    "displayName": "Donors Specimens Samples",
+    "field": "donors.specimens.samples",
+    "isActive": true,
+    "keyField": null,
+    "searchFields": [],
+    "__typename": "MatchBoxField"
+  },
+  {
+    "displayName": "Repositories",
+    "field": "repositories",
+    "isActive": true,
     "keyField": null,
     "searchFields": [],
     "__typename": "MatchBoxField"

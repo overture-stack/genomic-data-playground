@@ -139,7 +139,7 @@ services:
       - "./song-example-data:/song-client/input"
       - "./scratch/song-client-logs:/song-client/logs"
       - "./scratch/song-client-output:/song-client/output"
-    command: ["java", "--illegal-access=deny", "-Dlog.name=song", "-Dlog.path=/song-client/logs", "-Dlogback.configurationFile=/song-client/conf/logback.xml", "-jar", "/song-client/lib/song-client.jar", "/song-client/conf/application.yml"]
+    command: ./bin/sing
 
   song-server:
     image: overture/song-server:4.2.2
@@ -171,12 +171,12 @@ services:
       - song-db 
       - ego-server
       - score-server
+      - kafka-broker
     volumes:
       - "./scratch/song-server-logs:/song-server/logs"
-    command: ["java", "-Dlog.path=/song-server/logs", "-jar", "/song-server.jar", "--spring.config.location=classpath:/bootstrap.properties,classpath:/application.yml"]
 
   maestro:
-    image: overture/maestro:2.0.0
+    image: overture/maestro:3.2.0
     container_name: maestro
     ports:
       - 11235:11235
