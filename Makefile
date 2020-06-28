@@ -4,6 +4,7 @@
 DOCKER_COMPOSE_EXE := $(shell which docker-compose)
 CURL_EXE := $(shell which curl)
 GIT_EXE := $(shell which git)
+JQ_EXE := $(shell which jq)
 
 # Variables
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -63,17 +64,34 @@ $(SCORE_CLIENT_LOG_FILE):
 	@touch $(SCORE_CLIENT_LOGS_DIR)/client.log
 	@chmod 777 $(SCORE_CLIENT_LOG_FILE)
 
+_ping_ego_server:
+	@echo $(YELLOW)$(INFO_HEADER) "Pinging ego-server on http://localhost:9082" $(END)
+	@$(RETRY_CMD) curl -s \
+		--connect-timeout 5 \
+		--max-time 10 \
+		--retry 5 \
+		--retry-delay 0 \
+		--retry-max-time 40 \
+		--retry-connrefuse \
+        http://localhost:9082/oauth/token/public_key
+	@echo ""
+
 _ping_score_server:
 	@echo $(YELLOW)$(INFO_HEADER) "Pinging score-server on http://localhost:8087" $(END)
-	@$(RETRY_CMD) curl  \
-		-XGET \
-		--header "Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5" \
+	@$(RETRY_CMD) curl -s \
+		--connect-timeout 5 \
+		--max-time 10 \
+		--retry 5 \
+		--retry-delay 0 \
+		--retry-max-time 40 \
+		--retry-connrefuse \
 		"http://localhost:8087/download/ping"
 	@echo ""
 
 _ping_song_server:
 	@echo $(YELLOW)$(INFO_HEADER) "Pinging song-server on http://localhost:8080" $(END)
-	@$(RETRY_CMD) curl --connect-timeout 5 \
+	@$(RETRY_CMD) curl -s \
+		--connect-timeout 5 \
 		--max-time 10 \
 		--retry 5 \
 		--retry-delay 0 \
@@ -188,9 +206,8 @@ clean-output-dirs:
 clean: clean-elastic clean-docker clean-log-dirs clean-output-dirs
 
 #############################################################
-#  Indexing targets
+#  Indexing and ES Targets
 #############################################################
-
 # Just delete the documents, not the entire index.
 clear-es-documents:
 	@echo $(YELLOW)$(INFO_HEADER) "Deleting elasticsearch documents" $(END)
@@ -200,6 +217,16 @@ clear-es-documents:
 trigger-maestro-indexing:
 	@echo $(YELLOW)$(INFO_HEADER) "Manually triggering indexing in maestro" $(END);
 	@$(CURL_EXE) -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
+
+get-es-indices:
+	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
+	@$(CURL_EXE) -X GET "localhost:9200/_cat/indices"
+
+get-es-filecentric-content:
+	@echo $(YELLOW)$(INFO_HEADER) "file_centric content:" $(END)
+	@$(CURL_EXE) -X GET "localhost:9200/file_centric/_search?size=100" | ${JQ_EXE} -e
+
+get-es-info: get-es-indices get-es-filecentric-content
 
 #############################################################
 #  Docker targets
@@ -415,12 +442,6 @@ _test-unpublish_4: _ping_song_server
 #################################################################
 #  Main
 #################################################################
-test-elastic-status:
-	@echo $(YELLOW)$(INFO_HEADER) "Available indices:" $(END)
-	@$(CURL_EXE) -X GET "localhost:9200/_cat/indices"
-	@echo $(YELLOW)$(INFO_HEADER) "file_centric content:" $(END)
-	@$(CURL_EXE) -X GET "localhost:9200/file_centric/_search?size=100"
-
 # Submit several song payloads
 test-submit: _test-submit_1 _test-submit_2 _test-submit_3 _test-submit_4
 

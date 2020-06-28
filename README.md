@@ -2,6 +2,8 @@ The purpose of this repository is to provide users with a local and isolated san
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
 
+
+
 ##  <a name="toc"></a> Table of Contents
 * [Software Requirements](#software-requirements)
 * [Quick Start](#quick-start)
@@ -41,8 +43,11 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
       * [Look for an index content](#index-content)
       * [Look for existent indices and file_centric content](#elastic-content)
    * [Interaction Examples with Storage Services](#storage-services-interaction-examples)
-      * [Check Song is running](#health-check)
+      * [Check Song is running](#song-health-check)
+      * [Check Score is running](#score-health-check)
+      * [Check Ego is running](#ego-health-check)
       * [Create a Study](#create-study)
+      * [Create an AnalysisType](#create-analysis-type)
       * [Submit a payload](#submit-a-payload)
       * [Generate a manifest](#generate-a-manifest)
       * [Upload the files](#upload-the-files)
@@ -347,10 +352,26 @@ make test-elasticsearch-content
 ### <a name="storage-services-interaction-examples"></a>Interaction Examples with Storage Services
 This section contains the instructions for interacting with the storage services: `song` and `score`. The examples below are the most common use cases and were crafted in a way to allow the user to interact with a docker network of running services. For a more documentation on these services, please refer to the [Song documentation](https://song-docs.readthedocs.io/) and the [Score documentation](https://score-docs.readthedocs.io/)
 
-#### <a name="health-check"></a>Check Song is running
+#### <a name="song-health-check"></a>Check Song is running
 Ping the Song server to see if its running
 ```bash
 ./tools/song-client ping
+```
+
+[Back to Contents](#toc)
+
+#### <a name="score-health-check"></a>Check Score is running
+Execute the following command to ensure Score is running
+```bash
+curl -s -XGET http://localhost:8087/download/ping
+```
+
+[Back to Contents](#toc)
+
+#### <a name="ego-health-check"></a>Check Ego is running
+Execute the following command to ensure Ego is running
+```bash
+curl -s -XGET http://localhost:9082/oauth/token/public_key
 ```
 
 [Back to Contents](#toc)
@@ -363,8 +384,54 @@ In this repository, the study `ABC123` does not need to be created because the s
 curl -X POST \
   --header 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5'  \
   -d '{"studyId":"myNewStudyId"}' \
-  http://localhost:8080/studies/myNewStudyId/
+  'http://localhost:8080/studies/myNewStudyId/'
 ```
+
+[Back to Contents](#toc)
+
+#### <a name="registering-analysis-type"></a>Registering an AnalysisType
+In order to validate submitted payloads, an `analysisType` must be registered and then later referenced in a payload. 
+The `analysisType` is described by a jsonSchema that provides the necessary constraints to validate submitted payloads.
+For convienence, the analysisType `variantCall` is automatically registered when song is started, so this section is **optional** for the curious user.
+
+##### <a name="creating-register-analysis-type-payload"></a>1. Creating the RegisterAnalysisType Request
+Once the schema has been written, a json document needs to be prepared inorder to register the `analysisType`, which is called the `RegisterAnalysisTypeRequest` body.
+The following is an example `RegisterAnalysisTypeRequest` body:
+```
+{
+  "name": "<name of analysisType>".
+  "schema": {
+     ... schema from the previous step ...
+  }
+}
+```
+
+In order to write the schema, the meta-schema (also described using jsonSchema) must be used for reference.
+The meta-schema describes the structure and constraints for the `analysisType` schema. 
+This can be thought of as "a schema that describes a schema".
+The meta-schema can be retrieve using the following command:
+
+```bash
+curl -X GET "http://localhost:8080/schemas/registration"
+```
+
+Once written, save the document in the `./song-example-data/` directory. 
+Recall from the [docker host and container path mappings table](#docker-host-and-container-path-mappings), the `./song-example-data/` directory is mounted in the song-client as `/song-client/input`. For convenience, an example analysisType located in `./song-example-data/exampleAnalysisType.json` has already been created for the next step
+
+
+##### <a name="executing-register-analysis-type-request"></a>2. Execute the RegisterAnalysisType Endpoint
+Using the `RegisterAnalysisTypeRequest` document from the previous step, execute the following:
+
+```bash
+./tools/song-client register-analysis-type -f /song-client/input/exampleAnalysisType.json
+```
+
+If the analysisType did not previously exist, the analysisType will be registered with version 1.
+If the analysisType existed previously, then a **new** version will be created, 
+since analysisTypes are **immutable**. This is effectively the same as an **update**.
+
+Only users with system admin scope permissions can use this functionality, 
+however for convenience this repository has been bootstrapped with a dummy user with admin privileges.
 
 [Back to Contents](#toc)
 
@@ -404,18 +471,12 @@ Using the `manifest.txt` from the previous [manifest generation step](#generate-
 ./tools/score-client upload --manifest /song-client/output/manifest.txt
 ```
 
+[Back to Contents](#toc)
+
 #### <a name="publish-the-analysis"></a>Publish the analysis
 Once the files of an analysis are uploaded, the analysis can be published using the `analysisId` returned from the [submit step](#submit-a-payload)
 ```bash
 ./tools/song-client publish -a <analysisId>
-```
-
-[Back to Contents](#toc)
-
-#### <a name="unpublish-the-analysis"></a>Publish the analysis
-In order to overwrite files to score, the analysis must be unpublished. They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
-```bash
-./tools/song-client unpublish -a <analysisId>
 ```
 
 [Back to Contents](#toc)
@@ -440,18 +501,107 @@ The file can be accessed on the docker host by referring to the [docker path map
 
 [Back to Contents](#toc)
 
-### <a name="all-in-one"></a>Perform all the process at once
-It is possible to launch all the workload explained in this section with a single command that initializes all the services and uploads two payloads into the system with the following command:
+### <a name="all-in-one"></a>Perform all the steps are
+It is possible to launch all the workload explained in this section with a single command that:
+  - initializes all the services
+  - submits 4 payloads
+  - generates manifest for each of the submitted payloads
+  - uploads the files
+  - publishes the analyses
+
 ```bash
 make test-workflow
 ```
 
 [Back to Contents](#toc)
 
-### <a name="indexing-services-interaction-examples"></a>Interaction Examples with Indexing Services
-<!-- TODO:  -->
+#### <a name="unpublish-the-analysis"></a>Publish the analysis
+In order to overwrite files to score, the analysis must be unpublished. They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
+```bash
+./tools/song-client unpublish -a <analysisId>
+```
 
 [Back to Contents](#toc)
+
+#### <a name="update-analysis"></a>Update an Analysis
+Even after an analysis has been created, using its `analysisId`, 
+only the fields described by it's `analysisType` schema, can be updated using the following steps:
+
+##### <a name="prepare-update-analysis"></a>1. Prepare UpdateAnalysis Request
+Prepare a json document that contains the updated fields for the analysis.
+In addition to the fields described by the analysisType, the analysisType object must also be present.
+For example, after submitting the payload from the [submit a payload](#submit-a-payload) step, 
+if the `matchedNormalSampleSubmitterId` needs to be updated, the update analysis request would look like the following:
+
+```json
+{
+	"analysisType": {
+		"name": "variantCall"
+	},
+	"experiment" :{
+		"matchedNormalSampleSubmitterId": "updatedMatchedSubmitterId",
+		"variantCallingTool": "sameVariantCallingTool"
+	}
+}
+```
+
+Since there are no partial updates, **all** fields must be defined.
+
+
+[Back to Contents](#toc)
+
+##### <a name="execute-analysis-update"></a>2. Execute UpdateAnalysis Request
+
+Using the json file prepared in the previous step, say `myUpdateRequest.json`, execute the following request:
+
+```bash
+curl -XPUT \
+	-H 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5'  \
+	--data "@myUpdateRequest.json" \
+	"http://localhost:8080/ABC123/analysis/<analysisId>"
+```
+
+<!-- 
+TODO: update file instructions
+-->
+
+### <a name="indexing-services-interaction-examples"></a>Interaction Examples with Indexing Services
+
+#### <a name="automatic-index-creation"></a>Automatic Index Creation
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="delete-es-documents"></a>Delete ES Documents
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="trigger-index-study"></a>Trigger Indexing of a Study
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="trigger-index-repo"></a>Trigger Indexing of a Repository
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="trigger-index-anid"></a>Trigger Indexing of an AnalysisId
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="remove-analysis-id-index"></a>Remove an AnalysisId from the Index
+TODO:
+
+[Back to Contents](#toc)
+
+#### <a name="configure-index-exclusion-rules"></a>Configuring Exclusion Rules
+TODO:
+
+[Back to Contents](#toc)
+
 
 ### <a name="portal-services-interaction-examples"></a>Interaction Examples with Portal Services
 <!-- TODO:  -->
