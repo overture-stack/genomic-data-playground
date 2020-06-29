@@ -70,7 +70,9 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
 - GNU Make
 
 ## <a name="quick-start"></a>Quick Start
-Assuming docker, docker-compose and make are already installed, you can just jump straight to the [usage sections](#usage)
+Assuming docker, docker-compose and make are already installed, 
+you can jump straight to the [All in One](#all-in-one) section,
+followed by the [Configuring the Arranger Portal](#configuring-arranger-portal) section.
 
 [Back to Contents](#toc)
 
@@ -191,7 +193,7 @@ The following configurations are initialized when the services are started.
 - User Email: `john.doe@example.com`
 - User Name: `john.doe@example.com`
 - JWT: `any_jwt` (**Note**: although security is disabled, the Authorization header field must be present with all requests and can have ANY value)
-- Api Key: `f69b726d-d40f-4261-b105-1ec7e6bf04d5` (**Note**: this Api Key is the Access Token for both Song and Score)
+- Api Key: `f69b726d-d40f-4261-b105-1ec7e6bf04d5` (**Note**: this Api Key is the same as the Access Token for both Song and Score)
 - Api Key Scopes: `score.WRITE`, `song.WRITE`, `id.WRITE`
 - Database
     - Host: `localhost`
@@ -317,39 +319,6 @@ To kill all services and delete their data, run:
 make clean
 ```
 This will delete all files and directories located in the `./scratch` directory, including logs and generated files.
-
-### <a name="service-interaction-examples"></a>Service Interaction Examples
-
-#### <a name="index-analysis"></a>Index the already published analysis
-
-```bash
-curl -X PUT "localhost:9200/file_centric" -H 'Content-Type: application/json' --data "/path/to/repository/song-example-data/file_centric_mapping.json"
-curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'
-```
-
-or run the following command:
-
-```bash
-make create-elasticsearch-index
-```
-
-At this point, it is important to realize that the previous creation of the index is an optional step. Indeed, the user can only run the `curl -X POST http://localhost:11235/index/repository/local_song -H 'Content-Type: application/json' -H 'cache-control: no-cache'` and the index will be automatically created. Nevertheless, the types will be infered by ElasticSearch. In general, they are insered as `text` instead of `keyword`. This fact is incompatible with arranger, so the user is responsible to take care of the indices in ElasticSearch. In addition, it is no possible to change the type of indices that already contain some entries. Hence, this process must be done before inserting any entry.
-
-#### <a name="check-indices"></a>Look for existent indices
-```bash
-curl -X GET "localhost:9200/_cat/indices"
-```
-
-#### <a name="index-content"></a>Look for an index content
-```bash
-curl -X GET "localhost:9200/file_centric/_search?size=100"
-```
-
-#### <a name="elastic-content"></a> Look for existent indices and file_centric content
-It is possible to run the previous command by just running the following command:
-```bash
-make test-elasticsearch-content
-```
 
 ### <a name="storage-services-interaction-examples"></a>Interaction Examples with Storage Services
 This section contains the instructions for interacting with the storage services: `song` and `score`. The examples below are the most common use cases and were crafted in a way to allow the user to interact with a docker network of running services. For a more documentation on these services, please refer to the [Song documentation](https://song-docs.readthedocs.io/) and the [Score documentation](https://score-docs.readthedocs.io/)
@@ -504,7 +473,7 @@ The file can be accessed on the docker host by referring to the [docker path map
 [Back to Contents](#toc)
 
 ### <a name="all-in-one"></a>Perform all the steps are
-It is possible to launch all the workload explained in this section with a single command that:
+It is possible to launch all the steps explained in this section with a single command that:
   - initializes all the services
   - submits 4 payloads
   - generates manifest for each of the submitted payloads
@@ -720,81 +689,130 @@ MAESTRO_EXCLUSIONRULES_BYID_FILE_1: <objectId1>
 
 ```
 
-Since `maestro` uses the Spring Framework for Configuration, there are specific rules for binding environment variables to a list of values when configuring a server statically, called [Relaxed Bindings](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#lists-1)
+Since `maestro` uses the Spring Framework for Configuration, 
+there are specific rules for binding environment variables to 
+a list of values when configuring a server statically, 
+called [Relaxed Bindings](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#lists-1)
+
+#### <a name="elastic-content"></a> Get existing indices and file_centric data
+Existing indices can be found by running the following command:
+
+```bash
+curl -s -XGET "http://localhost:9200/_cat/indices"
+```
+
+The first 10 file_centric documents can be displayed by running:
+
+```bash
+curl -s -XGET "http://localhost:9200/file_centric/_search?size=10"
+```
+
+For convenience, both of the previous commands can be executed by running:
+
+```bash
+make get-es-info
+```
 
 [Back to Contents](#toc)
-
 
 ### <a name="portal-services-interaction-examples"></a>Interaction Examples with Portal Services
 
 #### <a name="special-arranger-note"></a>Special Notes for the Arranger Portal
-TODO: field types in ES mapping must be `keyword`. Maestro already takes care of this
+In order to use Arranger with an elasticsearch index, the index must have compatible mappings. 
+Arranger expects elasticsearch fields to be of type `keyword` instead of type `text`.
+
+For this reason, the [Automatic Index Creation](#automatic-index-creation) feature of `maestro` is leveraged, to create the correct elasticsearch mapping for the `file_centric` index. Without a predefined index mapping, elasticsearch will infer the type of a field as `text` which is incompatible with Arranger. In addition, it is not possible to change the type of a field after documents have been indexed.
 
 [Back to Contents](#toc)
 
 #### <a name="configuring-arranger-portal"></a>Configuring the Arranger Portal
-TODO: ramons notes
+In order to display the previously uploaded data in the Arranger Portal, a few simple configurations must be made:
 
-[Back to Contents](#toc)
+1. In a browser, visit http://localhost:9080
 
-### <a name="arranger-conf"></a>Website configuration
+2. Click on `Add Project`
 
-To configure the fields that will be shown in the website, arranger must be configured. This can be done through the `localhost:9080` endpoint:
+3. Enter the project name in the `Project ID` field. The project name must contain at least 1 underscore (`_`)
 
-1. Click on `Add Project`
+4. Click on `Add Index`
 
-2. Enter the project name in the `Project ID` field.
+5. Fill the fields `Name` with the Arranger alias for the elasticsearch index and `ES index` with the elasticsearch index `file_centric`.
+<img src="images/add_project.png" width="100%">
 
-3. Click on `Add Index`
+6. Click on `Choose Files` and select the all files located in `./arranger-data/project/file_centric/*`. These files contain sensible configurations for the purpose of this playground. 
 
-4. Fill the fields `Name` with the Arranger alias for the elasticsearch index and `ES index` with the elasticsearch index.
+7. Click `Add` to apply the configuration. 
+For more instructions on how to customize the Arranger configuration, 
+continue to the [Customize the Arranger Configuration](#customize-arranger-configuration) section. Otherwise, to view the portal with these configurations, go to the [Viewing the Arranger Portal](#viewing-portal) section.
 
-<img src="images/add_project.png" width="50%">
+#### <a name="customize-arranger-configuration"></a>Customize the Arranger Configuration
+8. Click on the project name
 
-5. Click on the project name
+	On this page, there are 3 important tabs:
+	
+	* Fields: allows the user to rename fields and specify their types. 
+	
+	* Aggs Panel: allows the user to select which fields files can be filtered on.
+	
+	* Table: allows the user to select which fields will be shown in the main table.
+	
+	Since `arranger` cannot have fields of type `id`, the type of must be changed to `keyword`. To do this:
 
-In this screen, there are 3 important tabs:
+9. Filter the fields by `Type` equal to `id`.
 
-* Fields: it allows to rename the fields and specify their type
+10. In the top right corner, change the `Aggregation Type` from `id` to `keyword` to all fields that are named `id`. In this playground, the concerned fields are:
 
-* Aggs Panel: it allows to select the information that will be available to do the filtering 
+	* analysis.id
+	* donors.id
+	* donors.specimens.id
+	* donors.specimens.samples.id
 
-* Table: it allows to select the available fields that will be shown in the central table
+11. For the following fields, ensure the `Is array` box is checked:
 
-At this stage, `arranger` cannot have fields of type `id` with this name. Hence, in this scenario, they have to be changed to `keyword`. In order to do so:
+	* donors
+	* donors.specimens
+	* donors.specimens.samples
 
-6. Filter the fields by `Type` equal to `id`.
+12. Click on the `Aggs Panel` tab
+<img src="images/aggs_panel.png" width="100%">
 
-7. In the top right corner, change the `Aggregation Type` from `id` to `keyword` to all fields that are named `id`. In this case, the concerned fields are:
+13. Check the box `Shown` for fields that can be used to filter files.
+These fields will be shown in the aggregation panel.
+It is also possible to disable fields so they are not accessible from the aggregation panel.
 
-* analysis.id
-* donors.id
-* donors.specimens.id
-* donors.specimens.samples.id
+14. Click on the `Table` tab
+<img src="images/table.png" width="100%">
 
-8. Click on the `Aggs Panel` tab
-
-<img src="images/aggs_panel.png" width="50%">
-
-9. Check the box `Shown` for those fields that you want to show in the aggregation panel. It is also possible to disable some parameters if you don't want them to be accessible from the website.
-
-10. Click on tthe `Table` tab
-
-<img src="images/table.png" width="50%">
-
-11. Select the fields that will be shown by default in the table. In addition, you can disable the fields that you don't want to be accessible from there.
+11. Select the fields that should be shown by default in the table. 
+In addition, fields can be disabled so they are not accessible from the table.
 
 12. Click on `Save Project`, on the top right corner
+<img src="images/modified_project.png" width="60%" style="padding-left: 20%">
 
-<img src="images/modified_project.png" width="10%">
-
-At this point, the setup is finished. It is already possible to open `localhost:3000` in a web browser, go to the `File Repository` and select the project and index we have just created.
-
-<img src="images/file_repository.png" width="50%">
-
-If you have already accessed this project previously, you may need to erase the cookies to select a project. In Chrome, this can be done by selecting the `i` icon next to the url, click on `Site settings`. Afterwards, click on the button `Clear data`. This way, you will keep all the other information stored by the navigator.
+13. At this point, the setup is finished. 
+Continue to [Viewing the Arranger Portal](#viewing-portal) section on how to access the search portal.
 
 [Back to Contents](#toc)
+
+#### <a name="viewing-portal"></a>Viewing the Arranger Portal
+1. Assuming `arranger` has been configured (refer to [Configuring the Arranger Portal](#configuring-arranger-portal)), visit http://localhost:3000
+
+2. If at the top right, the text `Log out` is present, click it. If a blank screen is present, clear the page data or open the link in a private/.incognito tab, otherwise continue to the next step.
+
+3. A page with the text `Data Portal` should be displayed with 2 drop downs:
+	* Select a version
+	* Select an index
+
+	For the `Select a version` drop down, select the desired project name. For the `Select an index` drop down, select the `file_centric` index.
+
+4. At this point, the `Data Portal Search Page` should be displayed with a table containing published files and an aggregation panel with fields to search on. To add more data to the table, publish new analyses. 
+As new analyses are published, refresh the page to see the analysis files added. 
+
+	For convenience, multiple analyses can be published with this simple command:
+
+	```bash
+	make test-workflow
+	```
 
 ## <a name="license"></a>License
 Copyright (c) 2020. Ontario Institute for Cancer Research
