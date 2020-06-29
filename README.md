@@ -2,65 +2,74 @@ The purpose of this repository is to provide users with a local and isolated san
 Every release contains a stable and tested configuration of various Overture products using absolute versions, so that specific configurations can be reproduced. 
 The services are managed by `docker-compose` and are bootstrapped with fixed data so that users can start playing around as fast as possible.
 
-
-
 ##  <a name="toc"></a> Table of Contents
 * [Software Requirements](#software-requirements)
 * [Quick Start](#quick-start)
 * [Software Installation for x86_64](#software-installation-for-x86_64)
-   * [Ubuntu 18.04 or Higher](#ubuntu-18.04-or-higher)
-      * [Docker](#ubuntu-docker)
-      * [Docker Compose](#ubuntu-docker-compose)
-      * [GNU Make](#ubuntu-gnu-make)
-   * [OSX](#osx)
-      * [Docker](#osx-docker)
-      * [Docker Compose](#osx-docker-compose)
-      * [Homebrew](#homebrew)
-      * [GNU Make](#osx-gnu-make)
+  * [Ubuntu 18.04 or Higher](#ubuntu-18.04-or-higher)
+    * [Docker](#ubuntu-docker)
+    * [Docker Compose](#ubuntu-docker-compose)
+    * [GNU Make](#ubuntu-gnu-make)
+  * [OSX](#osx)
+    * [Docker](#osx-docker)
+    * [Docker Compose](#osx-docker-compose)
+    * [Homebrew](#homebrew)
+    * [GNU Make](#osx-gnu-make)
 * [Storage Architecture](#storage-architecture)
 * [Indexing Architecture](#indexing-architecture)
 * [Portal Architecture](#portal-architecture)
 * [Bootstrapped Configurations](#bootstrapped-configurations)
-   * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
-   * [Ego](#ego)
-   * [Score](#score)
-   * [Song](#song)
-   * [Object Storage](#object-storage)
-   * [Zookeeper](#zookeeper)
-   * [ElasticSearch](#elasticsearch)
-   * [Kibana](#kibana)
-   * [Kafka Broker](#kafka)
-   * [Maestro](#maestro)
-   * [Arranger](#arranger)
+  * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
+  * [Ego](#ego)
+  * [Score](#score)
+  * [Song](#song)
+  * [Object Storage](#object-storage)
+  * [Zookeeper](#zookeeper)
+  * [ElasticSearch](#elasticsearch)
+  * [Kibana](#kibana)
+  * [Kafka Broker](#kafka)
+  * [Maestro](#maestro)
+  * [Arranger](#arranger)
 * [Usage](#usage)
-   * [Environment Setup](#environment-setup)
-      * [Starting All Services and Initializing Data](#starting-all-services-and-initializing-data)
-      * [Stopping All Services](#stopping-all-services)
-      * [Destroying All Services and Data](#destroying-all-services-and-data)
-   * [Service Interaction Examples](#service-interaction-examples)
-   	  * [Index the already published analysis and start indexing the upcoming ones](#index-analysis)
-   	  * [Look for existent indices](#check-indices)
-      * [Look for an index content](#index-content)
-      * [Look for existent indices and file_centric content](#elastic-content)
-   * [Interaction Examples with Storage Services](#storage-services-interaction-examples)
-      * [Check Song is running](#song-health-check)
-      * [Check Score is running](#score-health-check)
-      * [Check Ego is running](#ego-health-check)
-      * [Create a Study](#create-study)
-      * [Create an AnalysisType](#create-analysis-type)
-      * [Submit a payload](#submit-a-payload)
-      * [Generate a manifest](#generate-a-manifest)
-      * [Upload the files](#upload-the-files)
-      * [Publish the analysis](#publish-the-analysis)
-      * [Download analysis files](#download-analysis-files)
-   * [Interaction Examples with Indexing Services](#indexing-services-interaction-examples)
-   * [Interaction Examples with Portal Services](#portal-services-interaction-examples)
-   * [Perform all the process at once](#all-in-one)
+  * [Environment Setup](#environment-setup)
+    * [Cloning the Repository](#clone-repo)
+    * [Starting All Services and Initializing Data](#starting-all-services-and-initializing-data)
+    * [View Running Services](#view-running-services)
+    * [Stopping All Services](#stopping-all-services)
+    * [Destroying All Services and Data](#destroying-all-services-and-data)
+  * [Interaction Examples with Storage Services](#storage-services-interaction-examples)
+    * [Check Song is running](#song-health-check)
+    * [Check Score is running](#score-health-check)
+    * [Check Ego is running](#ego-health-check)
+    * [Submit a payload](#submit-a-payload)
+    * [Generate a manifest](#generate-a-manifest)
+    * [Upload the files](#upload-the-files)
+    * [Publish the analysis](#publish-the-analysis)
+    * [Download analysis files](#download-analysis-files)
+	* [Perform All Steps in One](#all-in-one)
+  * [Optional Song Service Interaction Examples](#advanced-song-examples)
+    * [Create a Study](#create-study)
+    * [Registering an AnalysisType](#registering-analysis-type)
+      * [1. Creating the RegisterAnalysisType Request](#creating-register-analysis-type-payload)
+      * [2. Execute the RegisterAnalysisType Endpoint](#executing-register-analysis-type-request)
+    * [Unpublish the analysis](#unpublish-the-analysis)
+    * [Update an Analysis](#update-analysis)
+      * [1. Prepare UpdateAnalysis Request](#prepare-update-analysis)
+      * [2. Execute UpdateAnalysis Request](#execute-analysis-update)
+  * [Interaction Examples with Indexing Services](#indexing-services-interaction-examples)
+    * [Automatic Index Creation](#automatic-index-creation)
+    * [Delete ES Documents](#delete-es-documents)
+    * [Trigger Indexing of a Repository](#trigger-index-repo)
+    * [Trigger Indexing of a Study](#trigger-index-study)
+    * [Trigger Indexing of an AnalysisId](#trigger-index-anid)
+    * [Configuring Exclusion Rules in Maestro](#configure-index-exclusion-rules)
+    * [Get existing indices and file_centric data](#elastic-content)
+  * [Interaction Examples with Portal Services](#portal-services-interaction-examples)
+    * [Special Notes for the Arranger Portal](#special-arranger-note)
+    * [Configuring the Arranger Portal](#configuring-arranger-portal)
+    * [Customize the Arranger Configuration](#customize-arranger-configuration)
+    * [Viewing the Arranger Portal](#viewing-portal)
 * [License](#license)
-
-<!-- Added by: rtisma, at: Wed Dec  4 09:34:59 EST 2019 -->
-
-<!--te-->
 
 ## <a name="software-requirements"></a> Software Requirements
 - docker engine version >= **18.06.0**
@@ -245,16 +254,6 @@ The following configurations are initialized when the services are started.
     - Project Config Dir: `./arranger-data/project/file_centric/`
 - Portal URL: http://localhost:3000
 
-### <a name="check-indices"></a>Look for existent indices
-```bash
-curl -X GET "localhost:9200/_cat/indices"
-```
-
-### <a name="index-content"></a>Look for an index content
-```bash
-curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
-```
-
 [Back to Contents](#toc)
 
 ## <a name="usage"></a>Usage
@@ -416,7 +415,7 @@ The file can be accessed on the docker host by referring to the [docker path map
 
 [Back to Contents](#toc)
 
-### <a name="all-in-one"></a>Perform All Steps in One
+#### <a name="all-in-one"></a>Perform All Steps in One
 It is possible to launch all the steps explained in this section with a single command that:
 
   - initializes all the services
