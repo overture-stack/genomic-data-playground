@@ -68,11 +68,14 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
 - compose file format version >= **3.7**
 - Bash Shell
 - GNU Make
+- curl
 
 ## <a name="quick-start"></a>Quick Start
 Assuming docker, docker-compose and make are already installed, 
-you can jump straight to the [All in One](#all-in-one) section,
-followed by the [Configuring the Arranger Portal](#configuring-arranger-portal) section.
+you can jump straight to the following sections in order:
+1. [All in One](#all-in-one)
+2. [Configuring the Arranger Portal](#configuring-arranger-portal)
+3. [Viewing the Arranger Portal](#viewing-portal)
 
 [Back to Contents](#toc)
 
@@ -255,7 +258,7 @@ curl -X GET "localhost:9200/file_centric_1.0/_search?size=100"
 [Back to Contents](#toc)
 
 ## <a name="usage"></a>Usage
-The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right.
+The following sections describe Makefile targets and how they can be executed to achieve a specific goal. A list of all available targets can be found by running `make help`. Multiple targets can be run in a specific order from left to right. All Makefile targets must be run from the root directory of this repository.
 
 [Back to Contents](#toc)
 
@@ -292,21 +295,18 @@ To start the arranger server, arranger admin ui, and arranger portal simply run 
 make start-arrangers-services
 ```
 
-<!-- 
-TODO: fix this
--->
-To start the elasticsearch, maestro, and arranger services, the website and index the already existent files in song, simply run the following command:
-
-```bash
-make start-maestro-services-and-indexing
-```
-
-To execute all the previous steps and start all services, simply run the command below. Since there are many services, it will take several minutes for the command to complete.
+To execute all the previous steps and start all services, simply run the command below. 
+Since there are many services, it will take several minutes for the command to complete.
 
  ```bash
 make start-all-services
  ```
-
+#### <a name="view-running-services"></a>View Running Services
+To view all the running services, run:
+ ```bash
+make ps
+ ```
+ 
 #### <a name="stopping-all-services"></a>Stopping All Services
 To just halt all services without deleting any data, run:
  ```bash
@@ -319,6 +319,8 @@ To kill all services and delete their data, run:
 make clean
 ```
 This will delete all files and directories located in the `./scratch` directory, including logs and generated files.
+
+[Back to Contents](#toc)
 
 ### <a name="storage-services-interaction-examples"></a>Interaction Examples with Storage Services
 This section contains the instructions for interacting with the storage services: `song` and `score`. The examples below are the most common use cases and were crafted in a way to allow the user to interact with a docker network of running services. For a more documentation on these services, please refer to the [Song documentation](https://song-docs.readthedocs.io/) and the [Score documentation](https://score-docs.readthedocs.io/)
@@ -347,64 +349,6 @@ curl -s -XGET http://localhost:9082/oauth/token/public_key
 
 [Back to Contents](#toc)
 
-#### <a name="create-study"></a>Create a Study
-Before submitting any data, a study must be created. The study used in this playground is `ABC123`.
-In this repository, the study `ABC123` does not need to be created because the song database is automatically bootstrapped for convenience. However, a new studyId `myNewStudyId` is created as follows:
-
-```bash
-curl -X POST \
-  --header 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5'  \
-  -d '{"studyId":"myNewStudyId"}' \
-  'http://localhost:8080/studies/myNewStudyId/'
-```
-
-[Back to Contents](#toc)
-
-#### <a name="registering-analysis-type"></a>Registering an AnalysisType
-In order to validate submitted payloads, an `analysisType` must be registered and then later referenced in a payload. 
-The `analysisType` is described by a jsonSchema that provides the necessary constraints to validate submitted payloads.
-For convienence, the analysisType `variantCall` is automatically registered when song is started, so this section is **optional** for the curious user.
-
-##### <a name="creating-register-analysis-type-payload"></a>1. Creating the RegisterAnalysisType Request
-Once the schema has been written, a json document needs to be prepared inorder to register the `analysisType`, which is called the `RegisterAnalysisTypeRequest` body.
-The following is an example `RegisterAnalysisTypeRequest` body:
-```
-{
-  "name": "<name of analysisType>".
-  "schema": {
-     ... schema from the previous step ...
-  }
-}
-```
-
-In order to write the schema, the meta-schema (also described using jsonSchema) must be used for reference.
-The meta-schema describes the structure and constraints for the `analysisType` schema. 
-This can be thought of as "a schema that describes a schema".
-The meta-schema can be retrieve using the following command:
-
-```bash
-curl -X GET "http://localhost:8080/schemas/registration"
-```
-
-Once written, save the document in the `./song-example-data/` directory. 
-Recall from the [docker host and container path mappings table](#docker-host-and-container-path-mappings), the `./song-example-data/` directory is mounted in the song-client as `/song-client/input`. For convenience, an example analysisType located in `./song-example-data/exampleAnalysisType.json` has already been created for the next step
-
-
-##### <a name="executing-register-analysis-type-request"></a>2. Execute the RegisterAnalysisType Endpoint
-Using the `RegisterAnalysisTypeRequest` document from the previous step, execute the following:
-
-```bash
-./tools/song-client register-analysis-type -f /song-client/input/exampleAnalysisType.json
-```
-
-If the analysisType did not previously exist, the analysisType will be registered with version 1.
-If the analysisType existed previously, then a **new** version will be created, 
-since analysisTypes are **immutable**. This is effectively the same as an **update**.
-
-Only users with system admin scope permissions can use this functionality, 
-however for convenience this repository has been bootstrapped with a dummy user with admin privileges.
-
-[Back to Contents](#toc)
 
 #### <a name="submit-a-payload"></a>Submit a payload
 Submit the `exampleVariantCall.json` file located in the `/song-client/input` directory
@@ -472,11 +416,12 @@ The file can be accessed on the docker host by referring to the [docker path map
 
 [Back to Contents](#toc)
 
-### <a name="all-in-one"></a>Perform all the steps are
+### <a name="all-in-one"></a>Perform All Steps in One
 It is possible to launch all the steps explained in this section with a single command that:
+
   - initializes all the services
   - submits 4 payloads
-  - generates manifest for each of the submitted payloads
+  - generates a manifest for each of the submitted payloads
   - uploads the files
   - publishes the analyses
 
@@ -486,8 +431,80 @@ make test-workflow
 
 [Back to Contents](#toc)
 
-#### <a name="unpublish-the-analysis"></a>Publish the analysis
-In order to overwrite files to score, the analysis must be unpublished. They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
+### <a name="advanced-song-examples"></a>Optional Song Service Interaction Examples
+This section contains **optional** advanced usage of Song.
+
+#### <a name="create-study"></a>Create a Study
+Before submitting any data, a study must be created. The study used in this playground is `ABC123`.
+In this playground, the study `ABC123` does not need to be created because the Song database is automatically bootstrapped for convenience, so this is an **optional** step. However, to create a new studyId, for example `myNewStudyId`, execute the following:
+
+```bash
+curl -X POST \
+  --header 'Authorization: Bearer f69b726d-d40f-4261-b105-1ec7e6bf04d5'  \
+  -d '{"studyId":"myNewStudyId"}' \
+  'http://localhost:8080/studies/myNewStudyId/'
+```
+
+[Back to Contents](#toc)
+
+#### <a name="registering-analysis-type"></a>Registering an AnalysisType
+In order to validate submitted payloads, an `analysisType` must be registered and then later referenced in a payload. 
+The `analysisType` is described by a jsonSchema that provides the necessary constraints to validate submitted payloads.
+For convenience, the analysisType `variantCall` is automatically registered when Song is started, so this section is **optional** for the curious user.
+
+##### <a name="creating-register-analysis-type-payload"></a>1. Creating the RegisterAnalysisType Request
+In order to register the `analysisType`, a json document needs 
+to be prepared containing the schema and name of the `analysisType`.
+This file is referred to as the `RegisterAnalysisType` request, the following is an example of the contents:
+
+```json
+{
+  "name": "<name of analysisType>".
+  "schema": {
+     ... valid jsonSchema ...
+  }
+}
+```
+
+When writing the schema, the meta-schema (also described using jsonSchema) must be used for reference.
+The meta-schema describes the structure and constraints for the `analysisType` schema.
+This can be thought of as "a schema that describes a schema".
+The meta-schema can be retrieved using the following command:
+
+```bash
+curl -X GET "http://localhost:8080/schemas/registration"
+```
+
+Once written, save the document in the `./song-example-data/` directory. 
+Recall from the [docker host and container path mappings table](#docker-host-and-container-path-mappings), the `./song-example-data/` directory is mounted in the song-client as `/song-client/input`. For convenience, an example `analysisType` located in `./song-example-data/exampleAnalysisType.json` has already been created for the next step.
+
+
+##### <a name="executing-register-analysis-type-request"></a>2. Execute the RegisterAnalysisType Endpoint
+Using the `RegisterAnalysisType` request document from the previous step, execute the following:
+
+```bash
+./tools/song-client register-analysis-type -f /song-client/input/<file-from-previous-step>.json
+```
+
+Using the example located in `./song-example-data/exampleAnalysisType.json`, the following command will register the example `analysisType`:
+
+```bash
+./tools/song-client register-analysis-type -f /song-client/input/exampleAnalysisType.json
+```
+
+If the `analysisType` did not previously exist, the `analysisType` will be registered with version 1.
+If the `analysisType` existed previously, then a **new** version will be created, 
+since analysisTypes are **immutable**. This is effectively the same as an **update**.
+
+Only users with system admin scope permissions can use this functionality, 
+however for convenience this playground has been bootstrapped with a dummy user that has admin privileges.
+
+[Back to Contents](#toc)
+
+#### <a name="unpublish-the-analysis"></a>Unpublish the analysis
+In order to re-upload files, the analysis must be unpublished. 
+They can be unpublished using the `analysisId` used in the [publish step](#publish-the-analysis)
+
 ```bash
 ./tools/song-client unpublish -a <analysisId>
 ```
@@ -496,7 +513,7 @@ In order to overwrite files to score, the analysis must be unpublished. They can
 
 #### <a name="update-analysis"></a>Update an Analysis
 Even after an analysis has been created, using its `analysisId`, 
-only the fields described by it's `analysisType` schema, can be updated using the following steps:
+only the fields described by it's `analysisType` schema can be updated using the following steps:
 
 ##### <a name="prepare-update-analysis"></a>1. Prepare UpdateAnalysis Request
 Prepare a json document that contains the updated fields for the analysis.
@@ -532,9 +549,6 @@ curl -XPUT \
 	"http://localhost:8080/ABC123/analysis/<analysisId>"
 ```
 
-<!-- 
-TODO: update file instructions
--->
 
 ### <a name="indexing-services-interaction-examples"></a>Interaction Examples with Indexing Services
 
@@ -651,7 +665,7 @@ curl -s -XPOST \
 
 #### <a name="configure-index-exclusion-rules"></a>Configuring Exclusion Rules in Maestro
 In certain scenarios, some entities need to be excluded from indexing. 
-There are 6 types of entities which `maestro` can be exclude by id:
+There are 6 types of entities which `maestro` can exclude by id:
 - study
 - analysis
 - donor
@@ -718,10 +732,14 @@ make get-es-info
 ### <a name="portal-services-interaction-examples"></a>Interaction Examples with Portal Services
 
 #### <a name="special-arranger-note"></a>Special Notes for the Arranger Portal
-In order to use Arranger with an elasticsearch index, the index must have compatible mappings. 
+In order to use `arranger` with an elasticsearch index, the index must have compatible mappings. 
 Arranger expects elasticsearch fields to be of type `keyword` instead of type `text`.
 
-For this reason, the [Automatic Index Creation](#automatic-index-creation) feature of `maestro` is leveraged, to create the correct elasticsearch mapping for the `file_centric` index. Without a predefined index mapping, elasticsearch will infer the type of a field as `text` which is incompatible with Arranger. In addition, it is not possible to change the type of a field after documents have been indexed.
+For this reason, the [Automatic Index Creation](#automatic-index-creation) feature of `maestro` is leveraged 
+\to create the correct elasticsearch mapping for the `file_centric` index. 
+Without a predefined index mapping, elasticsearch will infer the type of a field as `text` 
+which is incompatible with `arranger`. 
+In addition, it is not possible to change the type of a field after documents have been indexed.
 
 [Back to Contents](#toc)
 
@@ -736,31 +754,36 @@ In order to display the previously uploaded data in the Arranger Portal, a few s
 
 4. Click on `Add Index`
 
-5. Fill the fields `Name` with the Arranger alias for the elasticsearch index and `ES index` with the elasticsearch index `file_centric`.
+5. Fill the fields `Name` with the `arranger` alias for the elasticsearch index and `ES index` with the elasticsearch index `file_centric`.
 <img src="images/add_project.png" width="100%">
 
 6. Click on `Choose Files` and select the all files located in `./arranger-data/project/file_centric/*`. These files contain sensible configurations for the purpose of this playground. 
 
 7. Click `Add` to apply the configuration. 
-For more instructions on how to customize the Arranger configuration, 
-continue to the [Customize the Arranger Configuration](#customize-arranger-configuration) section. Otherwise, to view the portal with these configurations, go to the [Viewing the Arranger Portal](#viewing-portal) section.
+
+For more instructions on how to customize the `arranger` configuration, 
+continue to the [Customize the Arranger Configuration](#customize-arranger-configuration) section. 
+Otherwise, to view the portal with these configurations, 
+go to the [Viewing the Arranger Portal](#viewing-portal) section.
+
+[Back to Contents](#toc)
 
 #### <a name="customize-arranger-configuration"></a>Customize the Arranger Configuration
 8. Click on the project name
 
 	On this page, there are 3 important tabs:
 	
-	* Fields: allows the user to rename fields and specify their types. 
+	* **Fields**: allows the user to rename fields and specify their types. 
 	
-	* Aggs Panel: allows the user to select which fields files can be filtered on.
+	* **Aggs Panel**: allows the user to select which fields can be used to filter files.
 	
-	* Table: allows the user to select which fields will be shown in the main table.
+	* **Table**: allows the user to select which fields will be shown in the main table.
 	
-	Since `arranger` cannot have fields of type `id`, the type of must be changed to `keyword`. To do this:
+	Since `arranger` cannot have fields of type `id`, fields of type `id` must be changed to `keyword`. To do this:
 
 9. Filter the fields by `Type` equal to `id`.
 
-10. In the top right corner, change the `Aggregation Type` from `id` to `keyword` to all fields that are named `id`. In this playground, the concerned fields are:
+10. In the top right corner, change the `Aggregation Type` from `id` to `keyword` for all fields that are named `id`. In this playground, the fields of interest are:
 
 	* analysis.id
 	* donors.id
@@ -797,7 +820,9 @@ Continue to [Viewing the Arranger Portal](#viewing-portal) section on how to acc
 #### <a name="viewing-portal"></a>Viewing the Arranger Portal
 1. Assuming `arranger` has been configured (refer to [Configuring the Arranger Portal](#configuring-arranger-portal)), visit http://localhost:3000
 
-2. If at the top right, the text `Log out` is present, click it. If a blank screen is present, clear the page data or open the link in a private/.incognito tab, otherwise continue to the next step.
+2. If at the top right, the text `Log out` is present, click it. 
+If a blank screen is present, clear the page data or open the link in a private/incognito tab, 
+otherwise continue to the next step.
 
 3. A page with the text `Data Portal` should be displayed with 2 drop downs:
 	* Select a version
