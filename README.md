@@ -146,6 +146,8 @@ For more information on these services, visit the [Song documentation](https://s
 
 <img src="images/architecture.png" width="50%">
 
+TODO: optional kafka-broker
+
 [Back to Contents](#toc)
 
 ## <a name="indexing-architecture"></a>Indexing Architecture
@@ -567,44 +569,171 @@ TODO: update file instructions
 
 ### <a name="indexing-services-interaction-examples"></a>Interaction Examples with Indexing Services
 
+
 #### <a name="automatic-index-creation"></a>Automatic Index Creation
-TODO:
+When the `maestro` service is started, 
+it automatically creates the `file_centric` index in elasticsearch if it does not already exist.
+This is important, since the **default** `maestro` index mappings are compatible with `arranger` related services.
+Refer to [Special Arranger Notes](#special-arranger-note)
 
 [Back to Contents](#toc)
 
 #### <a name="delete-es-documents"></a>Delete ES Documents
-TODO:
+In order to delete all non-kibana and non-arranger documents for elasticsearch, the following command can be run:
 
-[Back to Contents](#toc)
+``` bash
+curl -s -XGET \ 
+	"http://localhost:9200/_cat/indices" \
+	| grep -v kibana | grep -v arranger | grep -v configuration \
+	| awk '{ print $3 }' \
+	| sed  's/^/http:\/\/localhost:9200\//' \
+	| sed 's/$/\/_delete_by_query/' \
+	| xargs curl -XPOST \
+		--header 'Content-Type: application/json' \
+		-d '{"query":{"match_all":{}}}' }'
+```
 
-#### <a name="trigger-index-study"></a>Trigger Indexing of a Study
-TODO:
+For convenience, the following Makefile command executes the above command:
+
+```bash
+make clear-es-documents
+```
 
 [Back to Contents](#toc)
 
 #### <a name="trigger-index-repo"></a>Trigger Indexing of a Repository
-TODO:
+The following command triggers indexing of an entire repository.
+This is not necessary when using `maestro` with a `kafka-broker` since 
+analysis events are automatically indexed by `maestro`.
+However, in the event the `kafka` service was unavailable for a period of time 
+while analyses for a particular study were created or published in Song, 
+this endpoint can be used to re-index the entire repository.
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/<repositoryName>"
+```
+
+In this playground, the `repositoryName` is configured to `local_song` and the command would be:
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/local_song"
+```
+
+For convenience, the above command can be run using the following command:
+
+```bash
+make trigger-maestro-indexing
+```
+
+[Back to Contents](#toc)
+
+#### <a name="trigger-index-study"></a>Trigger Indexing of a Study
+Similar to the [Trigger Indexing of a Repository](#trigger-indexing-of-a-repository) section, 
+the indexing of an entire study for a repository can be done by executing the following command:
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/<repositoryName>/study/<studyId>"
+```
+
+In this playground, the `repositoryName` is configured to `local_song`,
+and the `studyId` is configured to `ABC123`, so the command would be:
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/local_song/study/ABC123"
+```
 
 [Back to Contents](#toc)
 
 #### <a name="trigger-index-anid"></a>Trigger Indexing of an AnalysisId
-TODO:
+Similar to the [Trigger Indexing of a Study](#trigger-indexing-of-a-study) section, 
+a single analysis can be indexed using its `analysisId`, `studyId` and `repositoryName`:
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/<repositoryName>/study/<studyId>/analysis/<analysisId>"
+```
+
+In this playground, after publishing an analysis (refer to the [Publish the Analysis](#publish-the-analysis) section),
+using that `analysisId`, the studyId `ABC123` and the repositoryName `local_song`, 
+the analysis can be indexed by executing:
+
+```bash
+curl -s -XPOST \
+	-H 'Content-Type: application/json' \
+	-H 'cache-control: no-cache' \
+	"http://localhost:11235/index/repository/local_song/study/ABC123/analysis/<analysisId>"
+```
 
 [Back to Contents](#toc)
 
-#### <a name="remove-analysis-id-index"></a>Remove an AnalysisId from the Index
-TODO:
+#### <a name="configure-index-exclusion-rules"></a>Configuring Exclusion Rules in Maestro
+In certain scenarios, some entities need to be excluded from indexing. 
+There are 6 types of entities which `maestro` can be exclude by id:
+- study
+- analysis
+- donor
+- specimen
+- sample
+- file (or object)
 
-[Back to Contents](#toc)
+This is a static server configuration that requires a reboot of the `maestro` service.
+The following is an example of how environment variables can be used to exclude indexing for more than 1 id for each entity:
 
-#### <a name="configure-index-exclusion-rules"></a>Configuring Exclusion Rules
-TODO:
+```
+# Excluding multiple studyIds
+MAESTRO_EXCLUSIONRULES_BYID_STUDYID_0: <studyId0>
+MAESTRO_EXCLUSIONRULES_BYID_STUDYID_1: <studyId1>
+
+# Excluding multiple analysisIds
+MAESTRO_EXCLUSIONRULES_BYID_ANALYSIS_0: <analysisId0>
+MAESTRO_EXCLUSIONRULES_BYID_ANALYSIS_1: <analysisId1>
+
+# Excluding multiple donorIds
+MAESTRO_EXCLUSIONRULES_BYID_DONOR_0: <donorId0>
+MAESTRO_EXCLUSIONRULES_BYID_DONOR_1: <donorId1>
+
+# Excluding multiple specimenIds
+MAESTRO_EXCLUSIONRULES_BYID_SPECIMEN_0: <specimenId0>
+MAESTRO_EXCLUSIONRULES_BYID_SPECIMEN_1: <specimenId1>
+
+# Excluding multiple sampleIds
+MAESTRO_EXCLUSIONRULES_BYID_SAMPLE_0: <sampleId0>
+MAESTRO_EXCLUSIONRULES_BYID_SAMPLE_1: <sampleId1>
+
+# Excluding multiple objectIds
+MAESTRO_EXCLUSIONRULES_BYID_FILE_0: <objectId0>
+MAESTRO_EXCLUSIONRULES_BYID_FILE_1: <objectId1>
+
+```
+
+Since `maestro` uses the Spring Framework for Configuration, there are specific rules for binding environment variables to a list of values when configuring a server statically, called [Relaxed Bindings](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#lists-1)
 
 [Back to Contents](#toc)
 
 
 ### <a name="portal-services-interaction-examples"></a>Interaction Examples with Portal Services
-<!-- TODO:  -->
+
+#### <a name="special-arranger-note"></a>Special Notes for the Arranger Portal
+TODO: field types in ES mapping must be `keyword`. Maestro already takes care of this
+
+[Back to Contents](#toc)
+
+#### <a name="configuring-arranger-portal"></a>Configuring the Arranger Portal
+TODO: ramons notes
 
 [Back to Contents](#toc)
 
