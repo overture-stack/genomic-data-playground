@@ -15,9 +15,7 @@ The services are managed by `docker-compose` and are bootstrapped with fixed dat
     * [Docker Compose](#osx-docker-compose)
     * [Homebrew](#homebrew)
     * [GNU Make](#osx-gnu-make)
-* [Storage Architecture](#storage-architecture)
-* [Indexing Architecture](#indexing-architecture)
-* [Portal Architecture](#portal-architecture)
+* [Architecture](#architecture)
 * [Bootstrapped Configurations](#bootstrapped-configurations)
   * [Docker host and container path mappings](#docker-host-and-container-path-mappings)
   * [Ego](#ego)
@@ -151,26 +149,23 @@ brew install coreutils make
 
 [Back to Contents](#toc)
 
-## <a name="storage-architecture"></a>Storage Architecture
+## <a name="architecture"></a>Architecture
 There are 3 core Overture services used to manage genomic data: [Song](https://www.overture.bio/products/song) for genomic metadata, [Ego](https://www.overture.bio/products/ego) for security, and [Score](https://www.overture.bio/products/score) for genomic object data. 
 
 For Score the back-end object storage service that was used was [Minio](https://min.io/). For Song and Ego, `postgreSQL` was used as the database technology.
 
-For more information on these services, visit the [Song documentation](https://song-docs.readthedocs.io), [Ego documentation](https://ego.readthedocs.io) and [Score documentation](https://score-docs.readthedocs.io). 
+The core Overture service to manage Elasticsearch indices is [Maestro](https://www.overture.bio/products/maestro). Maestro can be configured to optionally use kafka for event-driven indexing of Song genomic metadata into Elasticsearch, or it can just be used to manually trigger indexing via its REST API.
 
-<img src="images/architecture.png" width="50%">
+The core Overture service to manage the genomic portal is [Arranger](https://www.overture.bio/products/arranger). In this playground, there are 3 key components to Arranger: the server which is a graphql gateway to the Elasticsearch index, the admin-ui which is used to configure the server, and the portal which is used to display the data.
 
-TODO: optional kafka-broker
+For more information on these services, visit their `Read the Docs` documentation:
+- [Ego documentation](https://ego.readthedocs.io)
+- [Song documentation](https://song-docs.readthedocs.io)
+- [Score documentation](https://score-docs.readthedocs.io). 
+- [Maestro documentation](https://maestro-overture.readthedocs.io)
+- [Arranger documentation](https://arranger.readthedocs.io)
 
-[Back to Contents](#toc)
-
-## <a name="indexing-architecture"></a>Indexing Architecture
-TODO: create maestro architecture diagram
-
-[Back to Contents](#toc)
-
-## <a name="portal-architecture"></a>Portal Architecture
-TODO: create arranger architecture diagram
+<img src="images/architecture.png" width="100%">
 
 [Back to Contents](#toc)
 
