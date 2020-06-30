@@ -453,7 +453,7 @@ This file is referred to as the `RegisterAnalysisType` request, the following is
 
 ```
 {
-  "name": "<name of analysisType>".
+  "name": "<name of analysisType>",
   "schema": {
      ... valid jsonSchema ...
   }
