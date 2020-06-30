@@ -286,7 +286,7 @@ make start-maestro-services
 To start the arranger server, arranger admin ui, and arranger portal simply run the following command:
 
 ```bash
-make start-arrangers-services
+make start-arranger-services
 ```
 
 To execute all the previous steps and start all services, simply run the command below. 
