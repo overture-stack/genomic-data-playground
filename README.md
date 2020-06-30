@@ -451,7 +451,7 @@ In order to register the `analysisType`, a json document needs
 to be prepared containing the schema and name of the `analysisType`.
 This file is referred to as the `RegisterAnalysisType` request, the following is an example of the contents:
 
-```json
+```
 {
   "name": "<name of analysisType>".
   "schema": {
