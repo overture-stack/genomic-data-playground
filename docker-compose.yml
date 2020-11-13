@@ -115,6 +115,8 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - "./song-db-init:/docker-entrypoint-initdb.d"
+    ports:
+      - "8432:5432"
 
   aws-cli:
     image: "mesosphere/aws-cli:latest"
